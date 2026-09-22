@@ -177,6 +177,28 @@
   .rec .rmeta{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);font-family:var(--mono);}
   .empty{color:var(--muted);font-size:13px;padding:30px;text-align:center;border:1px dashed var(--border);border-radius:6px;}
 
+  /* ---------- Instructions ---------- */
+  .instr-banner{
+    background:#2B1518;border:1px solid #4A2226;color:var(--red);
+    font-size:11.5px;letter-spacing:.03em;padding:8px 12px;border-radius:4px;margin-bottom:22px;
+  }
+  .instr-table{width:100%;border-collapse:collapse;margin-bottom:28px;font-size:12.5px;}
+  .instr-table th{
+    text-align:left;color:var(--muted);font-weight:600;font-size:11px;
+    padding:8px 10px;border-bottom:1px solid var(--border);
+  }
+  .instr-table td{padding:9px 10px;border-bottom:1px solid var(--border-soft);vertical-align:top;color:var(--text);}
+  .instr-table td:first-child{font-family:var(--mono);color:var(--blue);white-space:nowrap;}
+  .instr-table tr:hover td{background:var(--panel-2);}
+  .cycle-row{display:flex;gap:14px;background:var(--panel);border:1px solid var(--border);border-radius:6px;
+    padding:14px 16px;margin-bottom:8px;align-items:flex-start;}
+  .cycle-day{font-family:var(--mono);font-size:11px;color:var(--blue);width:78px;flex:none;padding-top:1px;}
+  .cycle-body .phase{font-size:13px;font-weight:600;margin-bottom:3px;}
+  .cycle-body .desc{font-size:12.5px;color:var(--muted);line-height:1.55;}
+  .gov-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
+  .gov-item{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-size:12.5px;line-height:1.6;color:var(--muted);}
+  .gov-item strong{color:var(--text);}
+
   /* ---------- Modal ---------- */
   .modal-backdrop{
     display:none;position:fixed;inset:0;background:rgba(3,7,15,.7);z-index:50;
@@ -254,6 +276,13 @@
       <button data-view="findings"><span class="dot"></span>Findings Register</button>
       <button data-view="evidence"><span class="dot"></span>Evidence Register</button>
       <button data-view="raid"><span class="dot"></span>RAID Log</button>
+      <button data-view="ricefw"><span class="dot"></span>RICEFW Review</button>
+      <button data-view="architecture"><span class="dot"></span>Architecture Review</button>
+      <button data-view="dataquality"><span class="dot"></span>Data Quality Review</button>
+      <button data-view="testing"><span class="dot"></span>Testing QA Review</button>
+      <button data-view="reports"><span class="dot"></span>Weekly Reports</button>
+      <button data-view="prompts"><span class="dot"></span>AI Prompt Library</button>
+      <button data-view="instructions"><span class="dot"></span>Instructions</button>
     </nav>
     <div class="sidebar-foot">
       <div class="who" id="whoAmI"></div>
@@ -326,6 +355,140 @@
         <button class="btn-add" id="addRaidBtn">+ New RAID Item</button>
       </div>
       <div class="rec-list" id="raidList"></div>
+    </section>
+    <!-- RICEFW -->
+    <section id="view-ricefw" class="view" style="display:none;">
+      <div class="page-head">
+        <h1>RICEFW Review</h1>
+        <p>Risk-based sampling register for &gt;300 custom objects — AI-03. Register populates from Week 7; KABO Technical Reviewer approves the final sample.</p>
+      </div>
+      <div class="toolbar">
+        <div class="filters">
+          <select id="ricefwFilterStatus"><option value="">All statuses</option><option>Not Reviewed</option><option>In Progress</option><option>Reviewed</option><option>Closed</option></select>
+          <select id="ricefwFilterCrit"><option value="">All criticalities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+        </div>
+        <button class="btn-add" id="addRicefwBtn">+ New Object</button>
+      </div>
+      <div class="rec-list" id="ricefwList"></div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section id="view-architecture" class="view" style="display:none;">
+      <div class="page-head">
+        <h1>Architecture Review</h1>
+        <p>Technical Architecture Fitness Assessment — AI-02. RISE Private Cloud, Clean Core, Integration, Transport, SPAU/SPDD.</p>
+      </div>
+      <div class="toolbar">
+        <div class="filters">
+          <select id="archFilterStatus"><option value="">All statuses</option><option>Not Reviewed</option><option>In Progress</option><option>Passed</option><option>Failed</option></select>
+          <select id="archFilterSeverity"><option value="">All severities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+        </div>
+      </div>
+      <div id="architectureGrouped"></div>
+    </section>
+
+    <!-- DATA QUALITY -->
+    <section id="view-dataquality" class="view" style="display:none;">
+      <div class="page-head">
+        <h1>Data Quality Review</h1>
+        <p>ECC / migration data quality monitoring — AI-04. O&amp;G-specific objects, migration reconciliation.</p>
+      </div>
+      <div class="toolbar">
+        <div class="filters">
+          <select id="dqFilterStatus"><option value="">All statuses</option><option>Not Reviewed</option><option>In Progress</option><option>Passed</option><option>Exceptions Found</option></select>
+          <select id="dqFilterSeverity"><option value="">All severities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+        </div>
+      </div>
+      <div id="dataQualityGrouped"></div>
+    </section>
+
+    <!-- TESTING -->
+    <section id="view-testing" class="view" style="display:none;">
+      <div class="page-head">
+        <h1>Testing QA Review</h1>
+        <p>SIT / UAT coverage — AI-05. Gate 2 requires &gt;95% UAT pass rate on critical scenarios and zero open Critical/High defects.</p>
+      </div>
+      <p class="section-label">GATE 2 READINESS TRACKER</p>
+      <div class="metrics-row" id="testingMetrics" style="margin-bottom:24px;"></div>
+      <p class="section-label">TEST SCENARIOS</p>
+      <div class="rec-list" id="testingList"></div>
+    </section>
+    <!-- WEEKLY REPORTS -->
+    <section id="view-reports" class="view" style="display:none;">
+      <div class="page-head">
+        <h1>Weekly Reports</h1>
+        <p>Auto-populated from the Findings Register + RAID Log — AI-06. QA Programme Director reviews and approves before issue, every Friday.</p>
+      </div>
+      <div class="toolbar">
+        <div class="filters"></div>
+        <button class="btn-add" id="genReportBtn">+ Generate report</button>
+      </div>
+      <div class="rec-list" id="reportsList"></div>
+    </section>
+
+    <!-- AI PROMPT LIBRARY -->
+    <section id="view-prompts" class="view" style="display:none;">
+      <div class="page-head">
+        <h1>AI Prompt Library</h1>
+        <p>Controlled instructions for AI-01 to AI-07. Updates require QA Programme Director approval. All AI outputs must be marked DRAFT until KABO-validated.</p>
+      </div>
+      <div class="rec-list" id="promptsList"></div>
+    </section>
+    <!-- INSTRUCTIONS -->
+    <section id="view-instructions" class="view" style="display:none;">
+      <div class="page-head">
+        <h1>Instructions</h1>
+        <p>Operating guide, tab reference, and weekly cycle — Adopted Methodology v1.1, EGPC Engagement Aligned.</p>
+      </div>
+      <div class="instr-banner">STRICTLY INTERNAL — Kabo Solutions Inc. Use Only — Not for Client Distribution</div>
+
+      <p class="section-label">MODULE REFERENCE</p>
+      <table class="instr-table">
+        <thead><tr><th>#</th><th>Module</th><th>Purpose</th><th>Primary Owner</th><th>Update Frequency</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Dashboard</td><td>Live control tower: 7-domain RAG, key metrics, gate readiness, top risks</td><td>QA Analyst – Reporting 1</td><td>Every Friday</td></tr>
+          <tr><td>2</td><td>Findings Register</td><td>Master QA findings register — all domains D0–D7, Gate 1/2/3 tracking</td><td>All Reviewers</td><td>As found</td></tr>
+          <tr><td>3</td><td>Evidence Register</td><td>Document receipt log, review status, evidence gap tracking</td><td>QA Analyst – Reporting 1</td><td>On receipt</td></tr>
+          <tr><td>4</td><td>RAID Log</td><td>Risks, Actions, Issues, Decisions — pre-seeded with R-01 to R-12 from SOW</td><td>Project Director</td><td>Weekly</td></tr>
+          <tr><td>5</td><td>RICEFW Review</td><td>Risk-based sampling register and AI-03 review matrix for &gt;300 objects</td><td>ABAP/Workflow Reviewer</td><td>Weeks 7–22</td></tr>
+          <tr><td>6</td><td>Architecture Review</td><td>AI-02 RISE/Basis/Clean Core checklist — Technical Architecture Fitness Assessment</td><td>Tech Reviewer</td><td>Weeks 3–6</td></tr>
+          <tr><td>7</td><td>Data Quality Review</td><td>AI-04 ECC data quality monitoring and migration reconciliation</td><td>Data Migration Specialist</td><td>Weekly (Mon)</td></tr>
+          <tr><td>8</td><td>Testing QA Review</td><td>AI-05 testing coverage, defect tracking, Gate 2 UAT 95% threshold</td><td>QA Analyst – Reporting 2</td><td>Weeks 13–22</td></tr>
+          <tr><td>9</td><td>Weekly Reports</td><td>AI-06 weekly report builder — auto-populated from registers</td><td>QA Programme Director</td><td>Every Friday</td></tr>
+          <tr><td>10</td><td>AI Prompt Library</td><td>Controlled prompt instructions for all 7 AI agents (AI-01 to AI-07)</td><td>QA Programme Director</td><td>Update as needed</td></tr>
+        </tbody>
+      </table>
+
+      <p class="section-label">WEEKLY OPERATING CYCLE (MON–FRI)</p>
+      <div class="cycle-row">
+        <div class="cycle-day">MONDAY</div>
+        <div class="cycle-body"><div class="phase">Ingestion</div><div class="desc">Log all documents received from EGPC/ITGEST into Evidence Register. AI-01 processes new submissions. Update document status.</div></div>
+      </div>
+      <div class="cycle-row">
+        <div class="cycle-day">TUESDAY</div>
+        <div class="cycle-body"><div class="phase">AI Analysis</div><div class="desc">AI agents process ingested documents. AI-02/03/04/05 prepare preliminary observations, evidence gaps, exceptions, and cross-document inconsistencies. All outputs marked DRAFT.</div></div>
+      </div>
+      <div class="cycle-row">
+        <div class="cycle-day">WEDNESDAY</div>
+        <div class="cycle-body"><div class="phase">KABO Validation</div><div class="desc">Technical Reviewer reviews AI DRAFT observations. Rejects false positives. Validates findings. Determines severity. Requests additional evidence. Updates Findings Register. Marks validated items as VALIDATED.</div></div>
+      </div>
+      <div class="cycle-row">
+        <div class="cycle-day">THURSDAY</div>
+        <div class="cycle-body"><div class="phase">Client Engagement</div><div class="desc">Present validated findings to EGPC (via QA Programme Director). Log all ITGEST exchanges in writing (R-11 protocol). Document client responses in Evidence Register. Follow up on evidence gaps.</div></div>
+      </div>
+      <div class="cycle-row" style="margin-bottom:26px;">
+        <div class="cycle-day">FRIDAY</div>
+        <div class="cycle-body"><div class="phase">Reporting</div><div class="desc">AI-06 prepares Weekly QA Report draft. QA Programme Director reviews and approves. Issue to Steering Committee. Update Dashboard RAG. Update RAID log. Archive weekly snapshot.</div></div>
+      </div>
+
+      <p class="section-label">AI GOVERNANCE — MANDATORY CONTROLS</p>
+      <div class="gov-list">
+        <div class="gov-item"><strong>AI MUST NOT independently:</strong> approve architecture · close findings · accept migration results · declare readiness · approve go-live · determine contractual compliance</div>
+        <div class="gov-item"><strong>KABO APPROVAL REQUIRED FOR:</strong> all final findings · severity determination · all recommendations · client-facing reports · technical conclusions · deliverable acceptance · executive reporting</div>
+        <div class="gov-item"><strong>All AI outputs</strong> must be marked DRAFT until validated by the responsible KABO reviewer. Draft findings must never be shared with clients.</div>
+        <div class="gov-item"><strong>ITGEST documents:</strong> all submissions from ITGEST are self-reported evidence. AI must flag ITGEST self-assessments separately. Apply professional scepticism. Verify independently where possible.</div>
+        <div class="gov-item"><strong>Data security:</strong> never upload SAP credentials, passwords, security keys, unrestricted production extracts, or personal data to general AI tools. Use approved private AI platforms only.</div>
+      </div>
     </section>
   </main>
 </div>
@@ -474,6 +637,224 @@
   </div>
 </div>
 
+<!-- ============ RICEFW MODAL ============ -->
+<div class="modal-backdrop" id="ricefwModalBackdrop">
+  <div class="modal">
+    <h2 id="ricefwModalTitle">New RICEFW Object</h2>
+    <input type="hidden" id="ri_pk" />
+    <div class="row2">
+      <div class="field"><label>RICEFW ID</label><input id="ri_ricefw_id" placeholder="Z_FI_001" /></div>
+      <div class="field"><label>Type</label><input id="ri_type" placeholder="Report/Interface/Conversion/Enhancement/Form/Workflow" /></div>
+    </div>
+    <div class="field"><label>Description</label><textarea id="ri_description"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Business process</label><input id="ri_business_process" /></div>
+      <div class="field"><label>Criticality</label>
+        <select id="ri_criticality"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>FS available</label><input id="ri_fs" placeholder="Yes/No/Partial" /></div>
+      <div class="field"><label>TS available</label><input id="ri_ts" placeholder="Yes/No/Partial" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Test evidence</label><input id="ri_test_evidence" /></div>
+      <div class="field"><label>Clean Core OK</label><input id="ri_clean_core" placeholder="Yes/No/N-A" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Integration deps</label><input id="ri_integration_deps" /></div>
+      <div class="field"><label>In sample</label>
+        <select id="ri_in_sample"><option value="false">No</option><option value="true">Yes</option></select>
+      </div>
+    </div>
+    <div class="field"><label>AI observation (DRAFT)</label><textarea id="ri_ai_observation"></textarea></div>
+    <div class="field"><label>KABO finding (VALIDATED)</label><textarea id="ri_kabo_finding"></textarea></div>
+    <div class="field"><label>Recommendation</label><textarea id="ri_recommendation"></textarea></div>
+    <div class="field"><label>Status</label>
+      <select id="ri_status"><option>Not Reviewed</option><option>In Progress</option><option>Reviewed</option><option>Closed</option></select>
+    </div>
+    <div class="modal-actions">
+      <div class="left"><button class="btn-delete" id="ricefwDeleteBtn" style="display:none;">Delete</button></div>
+      <div class="left">
+        <button class="btn-cancel" id="ricefwCancelBtn">Cancel</button>
+        <button class="btn-save" id="ricefwSaveBtn">Save object</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ARCHITECTURE MODAL ============ -->
+<div class="modal-backdrop" id="archModalBackdrop">
+  <div class="modal">
+    <h2 id="archModalTitle">Edit Checkpoint</h2>
+    <input type="hidden" id="ar_pk" />
+    <div class="field"><label>Section area</label><input id="ar_section" /></div>
+    <div class="field"><label>Review area</label><input id="ar_review_area" /></div>
+    <div class="field"><label>Requirement / check point</label><textarea id="ar_requirement"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Evidence ref</label><input id="ar_evidence_ref" /></div>
+      <div class="field"><label>Severity</label>
+        <select id="ar_severity"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Status</label>
+        <select id="ar_status"><option>Not Reviewed</option><option>In Progress</option><option>Passed</option><option>Failed</option></select>
+      </div>
+      <div class="field"><label>Finding ref</label><input id="ar_finding_ref" placeholder="F-003" /></div>
+    </div>
+    <div class="field"><label>AI observation (DRAFT)</label><textarea id="ar_ai_observation"></textarea></div>
+    <div class="field"><label>KABO finding (VALIDATED)</label><textarea id="ar_kabo_finding"></textarea></div>
+    <div class="modal-actions">
+      <div class="left"></div>
+      <div class="left">
+        <button class="btn-cancel" id="archCancelBtn">Cancel</button>
+        <button class="btn-save" id="archSaveBtn">Save checkpoint</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DATA QUALITY MODAL ============ -->
+<div class="modal-backdrop" id="dqModalBackdrop">
+  <div class="modal">
+    <h2 id="dqModalTitle">Edit Data Object</h2>
+    <input type="hidden" id="dq_pk" />
+    <div class="field"><label>Section area</label><input id="dq_section" /></div>
+    <div class="field"><label>Data object</label><input id="dq_data_object" /></div>
+    <div class="field"><label>Check point</label><textarea id="dq_check_point"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Source count</label><input type="number" id="dq_source_count" /></div>
+      <div class="field"><label>Target count</label><input type="number" id="dq_target_count" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Difference</label><input type="number" id="dq_difference" /></div>
+      <div class="field"><label>Exception count</label><input type="number" id="dq_exception_count" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Status</label>
+        <select id="dq_status"><option>Not Reviewed</option><option>In Progress</option><option>Passed</option><option>Exceptions Found</option></select>
+      </div>
+      <div class="field"><label>Severity</label>
+        <select id="dq_severity"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Finding ref</label><input id="dq_finding_ref" placeholder="F-004" /></div>
+    <div class="field"><label>AI observation (DRAFT)</label><textarea id="dq_ai_observation"></textarea></div>
+    <div class="field"><label>KABO finding (VALIDATED)</label><textarea id="dq_kabo_finding"></textarea></div>
+    <div class="modal-actions">
+      <div class="left"></div>
+      <div class="left">
+        <button class="btn-cancel" id="dqCancelBtn">Cancel</button>
+        <button class="btn-save" id="dqSaveBtn">Save data object</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TESTING MODAL ============ -->
+<div class="modal-backdrop" id="testModalBackdrop">
+  <div class="modal">
+    <h2 id="testModalTitle">Edit Test Scenario</h2>
+    <input type="hidden" id="te_pk" />
+    <div class="field"><label>Process area</label><input id="te_process_area" /></div>
+    <div class="field"><label>Test scenario</label><textarea id="te_test_scenario"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Test scripts</label><input id="te_test_scripts" /></div>
+      <div class="field"><label>Evidence ref</label><input id="te_evidence_ref" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Defect severity</label>
+        <select id="te_defect_severity"><option value="">—</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+      </div>
+      <div class="field"><label>Defect status</label>
+        <select id="te_defect_status"><option value="">—</option><option>Open</option><option>Closed</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>UAT result</label>
+        <select id="te_uat_result"><option value="">Pending</option><option>Pass</option><option>Fail</option></select>
+      </div>
+      <div class="field"><label>SIT result</label>
+        <select id="te_sit_result"><option value="">Pending</option><option>Pass</option><option>Fail</option></select>
+      </div>
+    </div>
+    <div class="field"><label>AI observation (DRAFT)</label><textarea id="te_ai_observation"></textarea></div>
+    <div class="field"><label>KABO finding (VALIDATED)</label><textarea id="te_kabo_finding"></textarea></div>
+    <div class="modal-actions">
+      <div class="left"><button class="btn-delete" id="testDeleteBtn" style="display:none;">Delete</button></div>
+      <div class="left">
+        <button class="btn-cancel" id="testCancelBtn">Cancel</button>
+        <button class="btn-save" id="testSaveBtn">Save scenario</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ WEEKLY REPORT MODAL ============ -->
+<div class="modal-backdrop" id="reportModalBackdrop">
+  <div class="modal" style="max-width:640px;">
+    <h2 id="reportModalTitle">Weekly QA Report</h2>
+    <input type="hidden" id="rp_pk" />
+    <div class="row2">
+      <div class="field"><label>Reporting period</label><input id="rp_period" placeholder="Wk 5 (Sep 22–26)" /></div>
+      <div class="field"><label>Week number</label><input id="rp_week" placeholder="5" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Report author</label><input id="rp_author" /></div>
+      <div class="field"><label>Approved by</label><input id="rp_approved_by" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Issue date</label><input type="date" id="rp_issue_date" /></div>
+      <div class="field"><label>Next report due</label><input type="date" id="rp_next_due" /></div>
+    </div>
+
+    <p class="section-label" style="margin-top:18px;">7-DOMAIN RAG STATUS (frozen at generation)</p>
+    <div id="rp_domain_snapshot" style="font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.9;margin-bottom:14px;"></div>
+
+    <p class="section-label">KEY METRICS (frozen at generation)</p>
+    <div id="rp_key_metrics" class="metrics-row" style="margin-bottom:18px;"></div>
+
+    <div class="field"><label>Key findings this week</label><textarea id="rp_key_findings" placeholder="Summarise the 3–5 most significant findings from this week's review activities. Note domain, severity, and required action."></textarea></div>
+    <div class="field"><label>Evidence gaps &amp; document requests</label><textarea id="rp_evidence_gaps" placeholder="List outstanding document requests. Identify any evidence gaps blocking QA conclusions."></textarea></div>
+    <div class="field"><label>ITGEST communications log</label><textarea id="rp_itgest_comms" placeholder="Summary of all written communications with ITGEST this week (R-11 protocol)."></textarea></div>
+    <div class="field"><label>Gate readiness update</label><textarea id="rp_gate_readiness" placeholder="Progress against Gate 1/2/3 criteria. Flag any items at risk of missing the gate deadline."></textarea></div>
+    <div class="field"><label>Actions for next week</label><textarea id="rp_next_actions" placeholder="Top 5 priority actions for the Technical Reviewer next week. Owner and deadline for each."></textarea></div>
+    <div class="field"><label>QA Programme Director notes</label><textarea id="rp_director_notes"></textarea></div>
+    <div class="field"><label>Status</label>
+      <select id="rp_status"><option>Draft</option><option>Issued</option></select>
+    </div>
+    <div class="modal-actions">
+      <div class="left"><button class="btn-delete" id="reportDeleteBtn">Delete</button></div>
+      <div class="left">
+        <button class="btn-cancel" id="reportCancelBtn">Cancel</button>
+        <button class="btn-save" id="reportSaveBtn">Save report</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PROMPT MODAL ============ -->
+<div class="modal-backdrop" id="promptModalBackdrop">
+  <div class="modal" style="max-width:640px;">
+    <h2 id="promptModalTitle">Edit Prompt</h2>
+    <input type="hidden" id="pr_pk" />
+    <div class="row2">
+      <div class="field"><label>Agent</label><input id="pr_agent" readonly /></div>
+      <div class="field"><label>Purpose</label><input id="pr_purpose" /></div>
+    </div>
+    <div class="field"><label>Controlled prompt / instruction</label><textarea id="pr_prompt" style="min-height:220px;font-family:var(--mono);font-size:12px;"></textarea></div>
+    <div class="field"><label>Notes / update log</label><textarea id="pr_notes"></textarea></div>
+    <div class="modal-actions">
+      <div class="left"></div>
+      <div class="left">
+        <button class="btn-cancel" id="promptCancelBtn">Cancel</button>
+        <button class="btn-save" id="promptSaveBtn">Save prompt</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://fqonpmalspvtftsvklvb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxb25wbWFsc3B2dGZ0c3ZrbHZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODU3NDQsImV4cCI6MjEwNTY2MTc0NH0.z7KLz2ZyUSnpReP1-ZyescMLdiKiv_gd8Eq1yqzE7Lc";
@@ -481,6 +862,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let STATE = {
   domains: [], findings: [], evidence: [], raid: [], gates: [],
+  ricefw: [], architecture: [], dataquality: [], testing: [],
+  reports: [], prompts: [],
   session: null
 };
 
@@ -552,9 +935,35 @@ document.getElementById('mainNav').addEventListener('click', (e) => {
 
 // ---------- DATA LOAD + REALTIME ----------
 async function initData() {
-  await Promise.all([loadDomains(), loadFindings(), loadEvidence(), loadRaid(), loadGates()]);
+  await Promise.all([loadDomains(), loadFindings(), loadEvidence(), loadRaid(), loadGates(), loadRicefw(), loadArchitecture(), loadDataQuality(), loadTesting(), loadReports(), loadPrompts()]);
   renderAll();
   subscribeRealtime();
+}
+
+async function loadReports() {
+  const { data } = await sb.from('weekly_reports').select('*').order('id', { ascending: false });
+  STATE.reports = data || [];
+}
+async function loadPrompts() {
+  const { data } = await sb.from('ai_prompt_library').select('*').order('agent');
+  STATE.prompts = data || [];
+}
+
+async function loadRicefw() {
+  const { data } = await sb.from('ricefw_review').select('*').order('id');
+  STATE.ricefw = data || [];
+}
+async function loadArchitecture() {
+  const { data } = await sb.from('architecture_review').select('*').order('id');
+  STATE.architecture = data || [];
+}
+async function loadDataQuality() {
+  const { data } = await sb.from('data_quality_review').select('*').order('id');
+  STATE.dataquality = data || [];
+}
+async function loadTesting() {
+  const { data } = await sb.from('testing_qa_review').select('*').order('id');
+  STATE.testing = data || [];
 }
 
 async function loadDomains() {
@@ -585,6 +994,12 @@ function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'evidence' }, async () => { await loadEvidence(); renderAll(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'raid_log' }, async () => { await loadRaid(); renderAll(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'gate_readiness' }, async () => { await loadGates(); renderAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'ricefw_review' }, async () => { await loadRicefw(); renderAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'architecture_review' }, async () => { await loadArchitecture(); renderAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'data_quality_review' }, async () => { await loadDataQuality(); renderAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'testing_qa_review' }, async () => { await loadTesting(); renderAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_reports' }, async () => { await loadReports(); renderAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'ai_prompt_library' }, async () => { await loadPrompts(); renderAll(); })
     .subscribe();
 }
 
@@ -593,6 +1008,12 @@ function renderAll() {
   renderFindings();
   renderEvidence();
   renderRaid();
+  renderRicefw();
+  renderArchitecture();
+  renderDataQuality();
+  renderTesting();
+  renderReports();
+  renderPrompts();
   populateDomainFilter();
 }
 
@@ -953,6 +1374,488 @@ document.getElementById('pwSaveBtn').addEventListener('click', async () => {
   } catch (e) {
     errEl.textContent = e.message || 'Could not update password.';
   }
+});
+
+// ---------- RICEFW ----------
+function renderRicefw() {
+  const statF = document.getElementById('ricefwFilterStatus').value;
+  const critF = document.getElementById('ricefwFilterCrit').value;
+  let rows = STATE.ricefw;
+  if (statF) rows = rows.filter(r => r.status === statF);
+  if (critF) rows = rows.filter(r => r.criticality === critF);
+  const list = document.getElementById('ricefwList');
+  if (!rows.length) {
+    list.innerHTML = '<div class="empty">Register is empty — risk-based sampling begins Week 7. Use "+ New Object" to log a sampled item.</div>';
+    return;
+  }
+  list.innerHTML = rows.map(r => `
+    <div class="rec" data-id="${r.id}">
+      <div class="rrow">
+        <div>
+          <span class="rid">${r.ricefw_id||'—'} · ${r.type||''}</span>
+          <div class="rtitle">${r.description||''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex:none;">
+          <span class="tag ${r.criticality||''}">${r.criticality||''}</span>
+          <span class="tag ${r.status==='Closed'?'Closed':'Open'}">${r.status||''}</span>
+        </div>
+      </div>
+      <div class="rmeta"><span>BUS PROCESS: ${r.business_process||'—'}</span><span>IN SAMPLE: ${r.in_sample?'Yes':'No'}</span><span>CLEAN CORE: ${r.clean_core_ok||'—'}</span></div>
+    </div>
+  `).join('');
+}
+['ricefwFilterStatus','ricefwFilterCrit'].forEach(id => document.getElementById(id).addEventListener('change', renderRicefw));
+document.getElementById('ricefwList').addEventListener('click', (e) => {
+  const rec = e.target.closest('.rec'); if (!rec) return;
+  openRicefwModal(STATE.ricefw.find(x => String(x.id) === rec.dataset.id));
+});
+document.getElementById('addRicefwBtn').addEventListener('click', () => openRicefwModal(null));
+function openRicefwModal(r) {
+  document.getElementById('ricefwModalTitle').textContent = r ? 'Edit ' + (r.ricefw_id||'object') : 'New RICEFW Object';
+  document.getElementById('ri_pk').value = r ? r.id : '';
+  document.getElementById('ri_ricefw_id').value = r ? (r.ricefw_id||'') : '';
+  document.getElementById('ri_type').value = r ? (r.type||'') : '';
+  document.getElementById('ri_description').value = r ? (r.description||'') : '';
+  document.getElementById('ri_business_process').value = r ? (r.business_process||'') : '';
+  document.getElementById('ri_criticality').value = r ? (r.criticality||'Medium') : 'Medium';
+  document.getElementById('ri_fs').value = r ? (r.fs_available||'') : '';
+  document.getElementById('ri_ts').value = r ? (r.ts_available||'') : '';
+  document.getElementById('ri_test_evidence').value = r ? (r.test_evidence||'') : '';
+  document.getElementById('ri_clean_core').value = r ? (r.clean_core_ok||'') : '';
+  document.getElementById('ri_integration_deps').value = r ? (r.integration_deps||'') : '';
+  document.getElementById('ri_in_sample').value = r ? String(!!r.in_sample) : 'false';
+  document.getElementById('ri_ai_observation').value = r ? (r.ai_observation||'') : '';
+  document.getElementById('ri_kabo_finding').value = r ? (r.kabo_finding||'') : '';
+  document.getElementById('ri_recommendation').value = r ? (r.recommendation||'') : '';
+  document.getElementById('ri_status').value = r ? (r.status||'Not Reviewed') : 'Not Reviewed';
+  document.getElementById('ricefwDeleteBtn').style.display = r ? 'inline-block' : 'none';
+  document.getElementById('ricefwModalBackdrop').classList.add('active');
+}
+document.getElementById('ricefwCancelBtn').addEventListener('click', () => document.getElementById('ricefwModalBackdrop').classList.remove('active'));
+document.getElementById('ricefwSaveBtn').addEventListener('click', async () => {
+  const pk = document.getElementById('ri_pk').value;
+  const payload = {
+    ricefw_id: document.getElementById('ri_ricefw_id').value,
+    type: document.getElementById('ri_type').value,
+    description: document.getElementById('ri_description').value,
+    business_process: document.getElementById('ri_business_process').value,
+    criticality: document.getElementById('ri_criticality').value,
+    fs_available: document.getElementById('ri_fs').value,
+    ts_available: document.getElementById('ri_ts').value,
+    test_evidence: document.getElementById('ri_test_evidence').value,
+    clean_core_ok: document.getElementById('ri_clean_core').value,
+    integration_deps: document.getElementById('ri_integration_deps').value,
+    in_sample: document.getElementById('ri_in_sample').value === 'true',
+    ai_observation: document.getElementById('ri_ai_observation').value,
+    kabo_finding: document.getElementById('ri_kabo_finding').value,
+    recommendation: document.getElementById('ri_recommendation').value,
+    status: document.getElementById('ri_status').value,
+    updated_at: new Date().toISOString(),
+  };
+  if (pk) { await sb.from('ricefw_review').update(payload).eq('id', pk); }
+  else { await sb.from('ricefw_review').insert(payload); }
+  document.getElementById('ricefwModalBackdrop').classList.remove('active');
+});
+document.getElementById('ricefwDeleteBtn').addEventListener('click', async () => {
+  const pk = document.getElementById('ri_pk').value;
+  if (pk && confirm('Delete this RICEFW object?')) {
+    await sb.from('ricefw_review').delete().eq('id', pk);
+    document.getElementById('ricefwModalBackdrop').classList.remove('active');
+  }
+});
+
+// ---------- ARCHITECTURE (grouped) ----------
+function renderArchitecture() {
+  const statF = document.getElementById('archFilterStatus').value;
+  const sevF = document.getElementById('archFilterSeverity').value;
+  let rows = STATE.architecture;
+  if (statF) rows = rows.filter(r => r.status === statF);
+  if (sevF) rows = rows.filter(r => r.severity === sevF);
+  const groups = {};
+  rows.forEach(r => { (groups[r.section_area] = groups[r.section_area] || []).push(r); });
+  const el = document.getElementById('architectureGrouped');
+  if (!rows.length) { el.innerHTML = '<div class="empty">No checkpoints match these filters.</div>'; return; }
+  el.innerHTML = Object.keys(groups).map(sec => `
+    <p class="section-label">${sec.toUpperCase()}</p>
+    <div class="rec-list" style="margin-bottom:22px;">
+      ${groups[sec].map(r => `
+        <div class="rec" data-id="${r.id}" data-kind="arch">
+          <div class="rrow">
+            <div>
+              <span class="rid">${r.review_area}</span>
+              <div class="rtitle">${r.requirement||''}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex:none;">
+              <span class="tag ${r.severity||''}">${r.severity||''}</span>
+              <span class="tag ${r.status==='Passed'?'Closed':(r.status==='Failed'?'Critical':'Open')}">${r.status||''}</span>
+            </div>
+          </div>
+          <div class="rmeta"><span>EVIDENCE: ${r.evidence_ref||'—'}</span><span>FINDING: ${r.finding_ref||'—'}</span></div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+['archFilterStatus','archFilterSeverity'].forEach(id => document.getElementById(id).addEventListener('change', renderArchitecture));
+document.getElementById('architectureGrouped').addEventListener('click', (e) => {
+  const rec = e.target.closest('.rec'); if (!rec) return;
+  openArchModal(STATE.architecture.find(x => String(x.id) === rec.dataset.id));
+});
+function openArchModal(r) {
+  if (!r) return;
+  document.getElementById('archModalTitle').textContent = 'Edit — ' + r.review_area;
+  document.getElementById('ar_pk').value = r.id;
+  document.getElementById('ar_section').value = r.section_area||'';
+  document.getElementById('ar_review_area').value = r.review_area||'';
+  document.getElementById('ar_requirement').value = r.requirement||'';
+  document.getElementById('ar_evidence_ref').value = r.evidence_ref||'';
+  document.getElementById('ar_severity').value = r.severity||'Medium';
+  document.getElementById('ar_status').value = r.status||'Not Reviewed';
+  document.getElementById('ar_finding_ref').value = r.finding_ref||'';
+  document.getElementById('ar_ai_observation').value = r.ai_observation||'';
+  document.getElementById('ar_kabo_finding').value = r.kabo_finding||'';
+  document.getElementById('archModalBackdrop').classList.add('active');
+}
+document.getElementById('archCancelBtn').addEventListener('click', () => document.getElementById('archModalBackdrop').classList.remove('active'));
+document.getElementById('archSaveBtn').addEventListener('click', async () => {
+  const pk = document.getElementById('ar_pk').value;
+  const payload = {
+    section_area: document.getElementById('ar_section').value,
+    review_area: document.getElementById('ar_review_area').value,
+    requirement: document.getElementById('ar_requirement').value,
+    evidence_ref: document.getElementById('ar_evidence_ref').value,
+    severity: document.getElementById('ar_severity').value,
+    status: document.getElementById('ar_status').value,
+    finding_ref: document.getElementById('ar_finding_ref').value || null,
+    ai_observation: document.getElementById('ar_ai_observation').value,
+    kabo_finding: document.getElementById('ar_kabo_finding').value,
+    updated_at: new Date().toISOString(),
+  };
+  await sb.from('architecture_review').update(payload).eq('id', pk);
+  document.getElementById('archModalBackdrop').classList.remove('active');
+});
+
+// ---------- DATA QUALITY (grouped) ----------
+function renderDataQuality() {
+  const statF = document.getElementById('dqFilterStatus').value;
+  const sevF = document.getElementById('dqFilterSeverity').value;
+  let rows = STATE.dataquality;
+  if (statF) rows = rows.filter(r => r.status === statF);
+  if (sevF) rows = rows.filter(r => r.severity === sevF);
+  const groups = {};
+  rows.forEach(r => { (groups[r.section_area] = groups[r.section_area] || []).push(r); });
+  const el = document.getElementById('dataQualityGrouped');
+  if (!rows.length) { el.innerHTML = '<div class="empty">No data objects match these filters.</div>'; return; }
+  el.innerHTML = Object.keys(groups).map(sec => `
+    <p class="section-label">${sec.toUpperCase()}</p>
+    <div class="rec-list" style="margin-bottom:22px;">
+      ${groups[sec].map(r => `
+        <div class="rec" data-id="${r.id}" data-kind="dq">
+          <div class="rrow">
+            <div>
+              <span class="rid">${r.data_object}</span>
+              <div class="rtitle">${r.check_point||''}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex:none;">
+              <span class="tag ${r.severity||''}">${r.severity||''}</span>
+              <span class="tag ${r.status==='Passed'?'Closed':(r.status==='Exceptions Found'?'Critical':'Open')}">${r.status||''}</span>
+            </div>
+          </div>
+          <div class="rmeta"><span>SRC/TGT: ${r.source_count??'—'}/${r.target_count??'—'}</span><span>DIFF: ${r.difference??0}</span><span>EXCEPTIONS: ${r.exception_count??'—'}</span><span>FINDING: ${r.finding_ref||'—'}</span></div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+['dqFilterStatus','dqFilterSeverity'].forEach(id => document.getElementById(id).addEventListener('change', renderDataQuality));
+document.getElementById('dataQualityGrouped').addEventListener('click', (e) => {
+  const rec = e.target.closest('.rec'); if (!rec) return;
+  openDqModal(STATE.dataquality.find(x => String(x.id) === rec.dataset.id));
+});
+function openDqModal(r) {
+  if (!r) return;
+  document.getElementById('dqModalTitle').textContent = 'Edit — ' + r.data_object;
+  document.getElementById('dq_pk').value = r.id;
+  document.getElementById('dq_section').value = r.section_area||'';
+  document.getElementById('dq_data_object').value = r.data_object||'';
+  document.getElementById('dq_check_point').value = r.check_point||'';
+  document.getElementById('dq_source_count').value = r.source_count ?? '';
+  document.getElementById('dq_target_count').value = r.target_count ?? '';
+  document.getElementById('dq_difference').value = r.difference ?? 0;
+  document.getElementById('dq_exception_count').value = r.exception_count ?? '';
+  document.getElementById('dq_status').value = r.status||'Not Reviewed';
+  document.getElementById('dq_severity').value = r.severity||'Medium';
+  document.getElementById('dq_finding_ref').value = r.finding_ref||'';
+  document.getElementById('dq_ai_observation').value = r.ai_observation||'';
+  document.getElementById('dq_kabo_finding').value = r.kabo_finding||'';
+  document.getElementById('dqModalBackdrop').classList.add('active');
+}
+document.getElementById('dqCancelBtn').addEventListener('click', () => document.getElementById('dqModalBackdrop').classList.remove('active'));
+document.getElementById('dqSaveBtn').addEventListener('click', async () => {
+  const pk = document.getElementById('dq_pk').value;
+  const payload = {
+    section_area: document.getElementById('dq_section').value,
+    data_object: document.getElementById('dq_data_object').value,
+    check_point: document.getElementById('dq_check_point').value,
+    source_count: document.getElementById('dq_source_count').value === '' ? null : Number(document.getElementById('dq_source_count').value),
+    target_count: document.getElementById('dq_target_count').value === '' ? null : Number(document.getElementById('dq_target_count').value),
+    difference: document.getElementById('dq_difference').value === '' ? 0 : Number(document.getElementById('dq_difference').value),
+    exception_count: document.getElementById('dq_exception_count').value === '' ? null : Number(document.getElementById('dq_exception_count').value),
+    status: document.getElementById('dq_status').value,
+    severity: document.getElementById('dq_severity').value,
+    finding_ref: document.getElementById('dq_finding_ref').value || null,
+    ai_observation: document.getElementById('dq_ai_observation').value,
+    kabo_finding: document.getElementById('dq_kabo_finding').value,
+    updated_at: new Date().toISOString(),
+  };
+  await sb.from('data_quality_review').update(payload).eq('id', pk);
+  document.getElementById('dqModalBackdrop').classList.remove('active');
+});
+
+// ---------- TESTING QA ----------
+function renderTesting() {
+  const rows = STATE.testing;
+  const withResult = rows.filter(r => r.uat_result);
+  const passCount = rows.filter(r => r.uat_result === 'Pass').length;
+  const pctPass = withResult.length ? Math.round((passCount / withResult.length) * 100) : 0;
+  const critOpen = rows.filter(r => r.defect_status === 'Open' && r.defect_severity === 'Critical').length;
+  const highOpen = rows.filter(r => r.defect_status === 'Open' && r.defect_severity === 'High').length;
+  document.getElementById('testingMetrics').innerHTML = `
+    <div class="metric"><div class="val ${pctPass<95?'amber':''}">${pctPass}%</div><div class="lbl">UAT Pass Rate (target &gt;95%)</div></div>
+    <div class="metric"><div class="val ${critOpen>0?'red':''}">${critOpen}</div><div class="lbl">Critical Defects Open (target 0)</div></div>
+    <div class="metric"><div class="val ${highOpen>0?'amber':''}">${highOpen}</div><div class="lbl">High Defects Open (target 0)</div></div>
+  `;
+  const list = document.getElementById('testingList');
+  list.innerHTML = rows.map(r => `
+    <div class="rec" data-id="${r.id}">
+      <div class="rrow">
+        <div>
+          <span class="rid">${r.process_area}</span>
+          <div class="rtitle">${r.test_scenario||''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex:none;">
+          ${r.defect_severity ? `<span class="tag ${r.defect_severity}">${r.defect_severity}</span>` : ''}
+          <span class="tag ${r.uat_result==='Pass'?'Closed':(r.uat_result==='Fail'?'Critical':'Open')}">UAT: ${r.uat_result||'Pending'}</span>
+        </div>
+      </div>
+      <div class="rmeta"><span>SIT: ${r.sit_result||'Pending'}</span><span>DEFECT: ${r.defect_status||'—'}</span><span>EVIDENCE: ${r.evidence_ref||'—'}</span></div>
+    </div>
+  `).join('');
+}
+document.getElementById('testingList').addEventListener('click', (e) => {
+  const rec = e.target.closest('.rec'); if (!rec) return;
+  openTestModal(STATE.testing.find(x => String(x.id) === rec.dataset.id));
+});
+function openTestModal(r) {
+  if (!r) return;
+  document.getElementById('testModalTitle').textContent = 'Edit — ' + r.process_area;
+  document.getElementById('te_pk').value = r.id;
+  document.getElementById('te_process_area').value = r.process_area||'';
+  document.getElementById('te_test_scenario').value = r.test_scenario||'';
+  document.getElementById('te_test_scripts').value = r.test_scripts||'';
+  document.getElementById('te_evidence_ref').value = r.evidence_ref||'';
+  document.getElementById('te_defect_severity').value = r.defect_severity||'';
+  document.getElementById('te_defect_status').value = r.defect_status||'';
+  document.getElementById('te_uat_result').value = r.uat_result||'';
+  document.getElementById('te_sit_result').value = r.sit_result||'';
+  document.getElementById('te_ai_observation').value = r.ai_observation||'';
+  document.getElementById('te_kabo_finding').value = r.kabo_finding||'';
+  document.getElementById('testDeleteBtn').style.display = 'none';
+  document.getElementById('testModalBackdrop').classList.add('active');
+}
+document.getElementById('testCancelBtn').addEventListener('click', () => document.getElementById('testModalBackdrop').classList.remove('active'));
+document.getElementById('testSaveBtn').addEventListener('click', async () => {
+  const pk = document.getElementById('te_pk').value;
+  const payload = {
+    process_area: document.getElementById('te_process_area').value,
+    test_scenario: document.getElementById('te_test_scenario').value,
+    test_scripts: document.getElementById('te_test_scripts').value,
+    evidence_ref: document.getElementById('te_evidence_ref').value,
+    defect_severity: document.getElementById('te_defect_severity').value || null,
+    defect_status: document.getElementById('te_defect_status').value || null,
+    uat_result: document.getElementById('te_uat_result').value || null,
+    sit_result: document.getElementById('te_sit_result').value || null,
+    ai_observation: document.getElementById('te_ai_observation').value,
+    kabo_finding: document.getElementById('te_kabo_finding').value,
+    updated_at: new Date().toISOString(),
+  };
+  await sb.from('testing_qa_review').update(payload).eq('id', pk);
+  document.getElementById('testModalBackdrop').classList.remove('active');
+});
+
+// ---------- WEEKLY REPORTS ----------
+function renderReports() {
+  const list = document.getElementById('reportsList');
+  if (!STATE.reports.length) { list.innerHTML = '<div class="empty">No reports yet. Click "+ Generate report" to snapshot the current state of the registers.</div>'; return; }
+  list.innerHTML = STATE.reports.map(r => `
+    <div class="rec" data-id="${r.id}">
+      <div class="rrow">
+        <div>
+          <span class="rid">${r.reporting_period || ('Week ' + (r.week_number||'?'))}</span>
+          <div class="rtitle">${r.report_author ? 'Author: ' + r.report_author : 'No author set'}${r.approved_by ? ' · Approved by: ' + r.approved_by : ''}</div>
+        </div>
+        <span class="tag ${r.status==='Issued'?'Closed':'Open'}">${r.status}</span>
+      </div>
+      <div class="rmeta"><span>ISSUE DATE: ${r.issue_date||'—'}</span><span>NEXT DUE: ${r.next_report_due||'—'}</span><span>CRIT OPEN: ${r.key_metrics?.critical_open ?? '—'}</span></div>
+    </div>
+  `).join('');
+}
+document.getElementById('reportsList').addEventListener('click', (e) => {
+  const rec = e.target.closest('.rec'); if (!rec) return;
+  openReportModal(STATE.reports.find(x => String(x.id) === rec.dataset.id));
+});
+
+function computeSnapshot() {
+  const domain_snapshot = STATE.domains.map(d => ({
+    id: d.id, name: d.name, rag: d.rag_status,
+    open: STATE.findings.filter(f => f.domain === d.id && f.status !== 'Closed').length,
+    closed: STATE.findings.filter(f => f.domain === d.id && f.status === 'Closed').length,
+  }));
+  const key_metrics = {
+    total_findings_open: STATE.findings.filter(f => f.status !== 'Closed').length,
+    total_findings_closed: STATE.findings.filter(f => f.status === 'Closed').length,
+    critical_open: STATE.findings.filter(f => f.status !== 'Closed' && f.severity === 'Critical').length,
+    high_open: STATE.findings.filter(f => f.status !== 'Closed' && f.severity === 'High').length,
+    evidence_gaps: STATE.evidence.filter(e => e.status === 'Overdue').length,
+    docs_pending: STATE.evidence.filter(e => e.status === 'Requested').length,
+    actions_overdue: STATE.raid.filter(r => r.type === 'Action' && r.status === 'Open').length,
+    ricefw_reviewed: STATE.ricefw.filter(r => r.status === 'Reviewed' || r.status === 'Closed').length,
+  };
+  return { domain_snapshot, key_metrics };
+}
+
+document.getElementById('genReportBtn').addEventListener('click', async () => {
+  const { domain_snapshot, key_metrics } = computeSnapshot();
+  const { data, error } = await sb.from('weekly_reports').insert({
+    status: 'Draft',
+    domain_snapshot, key_metrics,
+  }).select().single();
+  if (!error && data) {
+    await loadReports();
+    openReportModal(STATE.reports.find(x => x.id === data.id));
+  }
+});
+
+function openReportModal(r) {
+  if (!r) return;
+  document.getElementById('reportModalTitle').textContent = r.reporting_period || ('Report #' + r.id);
+  document.getElementById('rp_pk').value = r.id;
+  document.getElementById('rp_period').value = r.reporting_period || '';
+  document.getElementById('rp_week').value = r.week_number || '';
+  document.getElementById('rp_author').value = r.report_author || '';
+  document.getElementById('rp_approved_by').value = r.approved_by || '';
+  document.getElementById('rp_issue_date').value = r.issue_date || '';
+  document.getElementById('rp_next_due').value = r.next_report_due || '';
+  document.getElementById('rp_key_findings').value = r.key_findings || '';
+  document.getElementById('rp_evidence_gaps').value = r.evidence_gaps_notes || '';
+  document.getElementById('rp_itgest_comms').value = r.itgest_comms || '';
+  document.getElementById('rp_gate_readiness').value = r.gate_readiness_notes || '';
+  document.getElementById('rp_next_actions').value = r.next_week_actions || '';
+  document.getElementById('rp_director_notes').value = r.director_notes || '';
+  document.getElementById('rp_status').value = r.status || 'Draft';
+
+  const ds = r.domain_snapshot || [];
+  document.getElementById('rp_domain_snapshot').innerHTML = ds.map(d =>
+    `${d.id} — ${d.name}: <span style="color:var(--text);">${d.rag}</span> (open ${d.open} / closed ${d.closed})`
+  ).join('<br/>') || 'No snapshot captured.';
+
+  const km = r.key_metrics || {};
+  const metricPairs = [
+    ['Total Open', km.total_findings_open], ['Total Closed', km.total_findings_closed],
+    ['Critical Open', km.critical_open], ['High Open', km.high_open],
+    ['Evidence Gaps', km.evidence_gaps], ['Docs Pending', km.docs_pending],
+    ['Actions Overdue', km.actions_overdue], ['RICEFW Reviewed', km.ricefw_reviewed],
+  ];
+  document.getElementById('rp_key_metrics').innerHTML = metricPairs.map(([lbl,val]) =>
+    `<div class="metric"><div class="val">${val ?? '—'}</div><div class="lbl">${lbl}</div></div>`
+  ).join('');
+
+  document.getElementById('reportModalBackdrop').classList.add('active');
+}
+document.getElementById('reportCancelBtn').addEventListener('click', () => document.getElementById('reportModalBackdrop').classList.remove('active'));
+document.getElementById('reportSaveBtn').addEventListener('click', async () => {
+  const pk = document.getElementById('rp_pk').value;
+  const payload = {
+    reporting_period: document.getElementById('rp_period').value,
+    week_number: document.getElementById('rp_week').value,
+    report_author: document.getElementById('rp_author').value,
+    approved_by: document.getElementById('rp_approved_by').value,
+    issue_date: document.getElementById('rp_issue_date').value || null,
+    next_report_due: document.getElementById('rp_next_due').value || null,
+    key_findings: document.getElementById('rp_key_findings').value,
+    evidence_gaps_notes: document.getElementById('rp_evidence_gaps').value,
+    itgest_comms: document.getElementById('rp_itgest_comms').value,
+    gate_readiness_notes: document.getElementById('rp_gate_readiness').value,
+    next_week_actions: document.getElementById('rp_next_actions').value,
+    director_notes: document.getElementById('rp_director_notes').value,
+    status: document.getElementById('rp_status').value,
+    updated_at: new Date().toISOString(),
+  };
+  await sb.from('weekly_reports').update(payload).eq('id', pk);
+  document.getElementById('reportModalBackdrop').classList.remove('active');
+});
+document.getElementById('reportDeleteBtn').addEventListener('click', async () => {
+  const pk = document.getElementById('rp_pk').value;
+  if (pk && confirm('Delete this report?')) {
+    await sb.from('weekly_reports').delete().eq('id', pk);
+    document.getElementById('reportModalBackdrop').classList.remove('active');
+  }
+});
+
+// ---------- AI PROMPT LIBRARY ----------
+function renderPrompts() {
+  const list = document.getElementById('promptsList');
+  if (!STATE.prompts.length) { list.innerHTML = '<div class="empty">No prompts on file.</div>'; return; }
+  list.innerHTML = STATE.prompts.map(p => `
+    <div class="rec" data-id="${p.id}">
+      <div class="rrow">
+        <div>
+          <span class="rid">${p.agent}</span>
+          <div class="rtitle">${p.purpose||''}</div>
+        </div>
+        <button class="btn-cancel copy-prompt-btn" data-agent="${p.agent}" style="flex:none;padding:6px 12px;">Copy</button>
+      </div>
+      <div class="rmeta"><span>${(p.notes||'').slice(0,90)}</span></div>
+    </div>
+  `).join('');
+}
+document.getElementById('promptsList').addEventListener('click', (e) => {
+  const copyBtn = e.target.closest('.copy-prompt-btn');
+  if (copyBtn) {
+    e.stopPropagation();
+    const p = STATE.prompts.find(x => x.agent === copyBtn.dataset.agent);
+    if (p) {
+      navigator.clipboard.writeText(p.prompt || '').then(() => {
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+      });
+    }
+    return;
+  }
+  const rec = e.target.closest('.rec'); if (!rec) return;
+  openPromptModal(STATE.prompts.find(x => String(x.id) === rec.dataset.id));
+});
+function openPromptModal(p) {
+  if (!p) return;
+  document.getElementById('promptModalTitle').textContent = p.agent + ' — ' + (p.purpose||'');
+  document.getElementById('pr_pk').value = p.id;
+  document.getElementById('pr_agent').value = p.agent;
+  document.getElementById('pr_purpose').value = p.purpose||'';
+  document.getElementById('pr_prompt').value = p.prompt||'';
+  document.getElementById('pr_notes').value = p.notes||'';
+  document.getElementById('promptModalBackdrop').classList.add('active');
+}
+document.getElementById('promptCancelBtn').addEventListener('click', () => document.getElementById('promptModalBackdrop').classList.remove('active'));
+document.getElementById('promptSaveBtn').addEventListener('click', async () => {
+  const pk = document.getElementById('pr_pk').value;
+  const payload = {
+    purpose: document.getElementById('pr_purpose').value,
+    prompt: document.getElementById('pr_prompt').value,
+    notes: document.getElementById('pr_notes').value,
+    updated_at: new Date().toISOString(),
+  };
+  await sb.from('ai_prompt_library').update(payload).eq('id', pk);
+  document.getElementById('promptModalBackdrop').classList.remove('active');
 });
 
 // close modals on backdrop click
