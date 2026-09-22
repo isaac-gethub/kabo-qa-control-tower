@@ -27,7 +27,7 @@
     --sans:'IBM Plex Sans',system-ui,sans-serif;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-tap-highlight-color:transparent;}
   body{
     padding-top:env(safe-area-inset-top,0px);
     padding-bottom:env(safe-area-inset-bottom,0px);
@@ -230,16 +230,98 @@
   .btn-delete{background:none;border:1px solid #4A2226;color:var(--red);padding:9px 14px;border-radius:4px;font-size:12.5px;}
 
   .loading{color:var(--muted);font-size:13px;padding:20px;}
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:28px;}
+  .table-scroll .instr-table{margin-bottom:0;min-width:560px;}
 
-  @media (max-width:760px){
-    #app.active{grid-template-columns:1fr;}
-    aside{position:static;height:auto;flex-direction:row;overflow-x:auto;padding:12px;align-items:center;}
-    .brand{border:none;padding:0 12px 0 0;margin:0;flex:none;}
-    nav{flex-direction:row;flex:none;}
-    .sidebar-foot{display:none;}
-    main{padding:18px;}
+  /* ---------- Mobile top bar + drawer (hidden above 880px) ---------- */
+  #mobileTopBar{display:none;}
+  #mobileNavBackdrop{display:none;}
+
+  /* =========================================================
+     TABLET BREAKPOINT — ~880px
+     Sidebar becomes an off-canvas drawer opened via top bar.
+     ========================================================= */
+  @media (max-width:880px){
+    #app.active{grid-template-columns:1fr;grid-template-rows:auto 1fr;align-content:start;}
+
+    #mobileTopBar{
+      display:flex;align-items:center;gap:14px;
+      position:sticky;top:0;z-index:40;
+      background:var(--panel);border-bottom:1px solid var(--border);
+      padding:12px 16px;
+      padding-top:calc(12px + env(safe-area-inset-top,0px));
+    }
+    #mobileMenuBtn{
+      background:none;border:1px solid var(--border);color:var(--text);
+      width:40px;height:40px;min-width:40px;border-radius:6px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    }
+    #mobileMenuBtn span{width:18px;height:2px;background:var(--text);border-radius:2px;}
+    .mtb-title{font-size:13.5px;font-weight:600;}
+
+    aside#sidebarNav{
+      position:fixed;top:0;left:0;height:100%;width:260px;max-width:80vw;
+      z-index:46;transform:translateX(-100%);transition:transform .22s ease;
+      box-shadow:2px 0 28px rgba(3,7,15,.55);
+      flex-direction:column;overflow-y:auto;
+      padding-top:calc(20px + env(safe-area-inset-top,0px));
+    }
+    aside#sidebarNav.open{transform:translateX(0);}
+    .brand{border-bottom:1px solid var(--border-soft);padding:0 8px 18px;margin:0 0 14px;flex:none;}
+    nav{flex-direction:column;flex:1;}
+    nav button{padding:11px 10px;font-size:14px;}
+    .sidebar-foot{display:block;flex:none;}
+
+    #mobileNavBackdrop.active{
+      display:block;position:fixed;inset:0;background:rgba(3,7,15,.6);z-index:45;
+    }
+
+    main{padding:20px;}
     .modal{max-width:100%;}
     .row2{grid-template-columns:1fr;}
+  }
+
+  /* =========================================================
+     PHONE BREAKPOINT — ~600px
+     Tighter spacing, stacked cards, 16px form fields (prevents
+     iOS auto-zoom on focus), full-width action buttons.
+     ========================================================= */
+  @media (max-width:600px){
+    main{padding:14px 14px 50px;}
+    .page-head h1{font-size:17px;}
+    .page-head p{font-size:12.5px;}
+
+    .domain-grid,.metrics-row,.gate-row{gap:8px;}
+    .domain-tile,.metric,.gate-card{padding:12px;}
+    .metric .val{font-size:22px;}
+
+    .toolbar{flex-direction:column;align-items:stretch;}
+    .toolbar .filters{width:100%;}
+    .toolbar .filters select{flex:1;min-width:0;}
+    .btn-add{width:100%;padding:11px 14px;}
+
+    .rec{padding:12px 14px;}
+    .rec .rrow{flex-direction:column;gap:6px;}
+    .rec .rrow > div:last-child{display:flex;flex-wrap:wrap;}
+
+    .modal-backdrop{padding:0;align-items:flex-end;}
+    .modal{
+      max-width:100%;width:100%;border-radius:12px 12px 0 0;
+      max-height:92vh;overflow-y:auto;margin-bottom:0;
+      padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));
+    }
+    .modal-actions{flex-direction:column-reverse;align-items:stretch;}
+    .modal-actions .left{width:100%;}
+    .modal-actions .left:last-child{flex-direction:column-reverse;}
+    .btn-save,.btn-cancel,.btn-delete{width:100%;text-align:center;padding:12px 16px;}
+
+    /* iOS zooms the viewport on focus of any input under 16px — keep all form fields at 16px on phone */
+    input,select,textarea{font-size:16px !important;}
+    .domain-tile select,.gate-card select{padding:8px 6px;}
+    .toolbar select,.toolbar input{padding:10px 9px;}
+
+    .cycle-row{flex-direction:column;gap:4px;}
+    .cycle-day{width:auto;}
   }
 </style>
 </head>
@@ -269,7 +351,14 @@
 
 <!-- ============ APP SHELL ============ -->
 <div id="app">
-  <aside>
+  <div id="mobileTopBar">
+    <button id="mobileMenuBtn" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+    <span class="mtb-title">KABO QA Control Tower</span>
+  </div>
+  <div id="mobileNavBackdrop"></div>
+  <aside id="sidebarNav">
     <div class="brand">
       <div class="mark">KABO SYSTEMS</div>
       <h2>QA Control Tower</h2>
@@ -447,6 +536,7 @@
       <div class="instr-banner">STRICTLY INTERNAL — Kabo Solutions Inc. Use Only — Not for Client Distribution</div>
 
       <p class="section-label">MODULE REFERENCE</p>
+      <div class="table-scroll">
       <table class="instr-table">
         <thead><tr><th>#</th><th>Module</th><th>Purpose</th><th>Primary Owner</th><th>Update Frequency</th></tr></thead>
         <tbody>
@@ -462,6 +552,7 @@
           <tr><td>10</td><td>AI Prompt Library</td><td>Controlled prompt instructions for all 7 AI agents (AI-01 to AI-07)</td><td>QA Programme Director</td><td>Update as needed</td></tr>
         </tbody>
       </table>
+      </div>
 
       <p class="section-label">WEEKLY OPERATING CYCLE (MON–FRI)</p>
       <div class="cycle-row">
@@ -927,6 +1018,20 @@ sb.auth.onAuthStateChange((event, session) => {
   }
 });
 
+// ---------- MOBILE DRAWER ----------
+const sidebarNav = document.getElementById('sidebarNav');
+const navBackdrop = document.getElementById('mobileNavBackdrop');
+function openDrawer() {
+  sidebarNav.classList.add('open');
+  navBackdrop.classList.add('active');
+}
+function closeDrawer() {
+  sidebarNav.classList.remove('open');
+  navBackdrop.classList.remove('active');
+}
+document.getElementById('mobileMenuBtn').addEventListener('click', openDrawer);
+navBackdrop.addEventListener('click', closeDrawer);
+
 // ---------- NAV ----------
 document.getElementById('mainNav').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-view]');
@@ -935,6 +1040,7 @@ document.getElementById('mainNav').addEventListener('click', (e) => {
   btn.classList.add('active');
   document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
   document.getElementById('view-' + btn.dataset.view).style.display = 'block';
+  closeDrawer();
 });
 
 // ---------- DATA LOAD + REALTIME ----------
