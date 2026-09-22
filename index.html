@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KABO QA Control Tower — EGPC Engagement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --bg:#0B1220;
+    --panel:#101A2C;
+    --panel-2:#131F35;
+    --border:#22304A;
+    --border-soft:#1A2740;
+    --text:#E7ECF3;
+    --muted:#8B99B0;
+    --muted-2:#5E6E88;
+    --red:#E5484D;
+    --amber:#F2A93B;
+    --green:#3DD68C;
+    --blue:#4C8DFF;
+    --blue-dim:#2C5AA8;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);}
+  body{
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  a{color:var(--blue);}
+  ::selection{background:var(--blue-dim);}
+  button{font-family:var(--sans);cursor:pointer;}
+  input,select,textarea{font-family:var(--sans);}
+
+  /* ---------- Auth screen ---------- */
+  #authScreen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:24px;
+  }
+  .auth-box{
+    width:100%;max-width:380px;background:var(--panel);border:1px solid var(--border);
+    border-radius:6px;padding:32px 28px;
+  }
+  .auth-box h1{
+    font-size:15px;letter-spacing:.02em;margin:0 0 4px;color:var(--text);font-weight:600;
+  }
+  .auth-box .sub{color:var(--muted);font-size:13px;margin:0 0 24px;line-height:1.5;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .field input{
+    width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+    padding:9px 10px;border-radius:4px;font-size:14px;
+  }
+  .field input:focus{outline:none;border-color:var(--blue);}
+  .btn{
+    background:var(--blue);color:#fff;border:none;padding:10px 16px;border-radius:4px;
+    font-size:13px;font-weight:600;width:100%;
+  }
+  .btn:hover{background:#3D7BE8;}
+  .btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn.secondary:hover{border-color:var(--muted);}
+  .auth-toggle{margin-top:16px;text-align:center;font-size:12.5px;color:var(--muted);}
+  .auth-toggle button{background:none;border:none;color:var(--blue);font-size:12.5px;padding:0;}
+  .auth-error{color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px;}
+  .auth-note{color:var(--muted-2);font-size:11.5px;margin-top:18px;line-height:1.5;border-top:1px solid var(--border-soft);padding-top:14px;}
+
+  /* ---------- App shell ---------- */
+  #app{display:none;min-height:100vh;grid-template-columns:220px 1fr;}
+  #app.active{display:grid;}
+  aside{
+    background:var(--panel);border-right:1px solid var(--border);
+    padding:20px 14px;display:flex;flex-direction:column;
+    position:sticky;top:0;height:100vh;
+  }
+  .brand{padding:0 8px 18px;border-bottom:1px solid var(--border-soft);margin-bottom:14px;}
+  .brand .mark{font-family:var(--mono);font-size:11px;color:var(--blue);letter-spacing:.08em;}
+  .brand h2{font-size:14px;margin:4px 0 2px;font-weight:600;line-height:1.3;}
+  .brand .eng{font-size:11.5px;color:var(--muted);}
+  nav{display:flex;flex-direction:column;gap:2px;flex:1;}
+  nav button{
+    text-align:left;background:none;border:none;color:var(--muted);padding:9px 10px;
+    border-radius:5px;font-size:13.5px;display:flex;align-items:center;gap:9px;
+  }
+  nav button .dot{width:6px;height:6px;border-radius:50%;background:var(--muted-2);flex:none;}
+  nav button:hover{background:var(--panel-2);color:var(--text);}
+  nav button.active{background:var(--panel-2);color:var(--text);font-weight:600;}
+  nav button.active .dot{background:var(--blue);}
+  .sidebar-foot{border-top:1px solid var(--border-soft);padding-top:12px;margin-top:12px;}
+  .who{font-size:11.5px;color:var(--muted);margin-bottom:8px;word-break:break-all;}
+  .signout{background:none;border:1px solid var(--border);color:var(--muted);width:100%;
+    padding:7px;border-radius:4px;font-size:12px;}
+  .signout:hover{border-color:var(--muted);color:var(--text);}
+
+  main{padding:26px 32px 60px;overflow-x:hidden;max-width:1180px;}
+  .page-head{margin-bottom:22px;}
+  .page-head h1{font-size:19px;margin:0 0 4px;font-weight:600;}
+  .page-head p{font-size:13px;color:var(--muted);margin:0;}
+
+  /* ---------- RAG domain grid ---------- */
+  .domain-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:28px;
+  }
+  .domain-tile{
+    background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px;
+    position:relative;
+  }
+  .domain-tile .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .domain-tile .code{font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .light{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 8px currentColor;}
+  .light.GREEN{background:var(--green);color:var(--green);}
+  .light.AMBER{background:var(--amber);color:var(--amber);}
+  .light.RED{background:var(--red);color:var(--red);}
+  .light.NA{background:var(--muted-2);color:var(--muted-2);box-shadow:none;}
+  .domain-tile .name{font-size:13px;font-weight:600;margin-bottom:2px;line-height:1.3;}
+  .domain-tile .desc{font-size:11.5px;color:var(--muted);line-height:1.4;margin-bottom:10px;min-height:30px;}
+  .domain-tile .meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--muted-2);}
+  .domain-tile select{
+    margin-top:10px;width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+    font-size:11px;padding:5px 6px;border-radius:4px;
+  }
+
+  /* ---------- Metrics ---------- */
+  .section-label{font-size:11px;text-transform:none;color:var(--muted);letter-spacing:.02em;margin:0 0 10px;font-weight:600;}
+  .metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:28px;}
+  .metric{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px;}
+  .metric .val{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;}
+  .metric .val.red{color:var(--red);}
+  .metric .val.amber{color:var(--amber);}
+  .metric .lbl{font-size:11.5px;color:var(--muted);margin-top:6px;}
+
+  /* ---------- Gate cards ---------- */
+  .gate-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:10px;}
+  .gate-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:16px;}
+  .gate-card .gh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .gate-card h3{font-size:13.5px;margin:0;font-weight:600;}
+  .gate-card .win{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:10px;}
+  .gate-card .crit{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;}
+  .status-pill{font-size:10.5px;padding:3px 8px;border-radius:20px;font-weight:600;letter-spacing:.02em;}
+  .status-pill.Pending{background:#2A2415;color:var(--amber);}
+  .status-pill.Met{background:#132B22;color:var(--green);}
+  .status-pill.Blocked{background:#2B1518;color:var(--red);}
+
+  /* ---------- Data tables ---------- */
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+  .toolbar .filters{display:flex;gap:8px;flex-wrap:wrap;}
+  .toolbar select, .toolbar input{
+    background:var(--panel);border:1px solid var(--border);color:var(--text);
+    padding:7px 9px;border-radius:4px;font-size:12.5px;
+  }
+  .btn-add{background:var(--blue);color:#fff;border:none;padding:8px 14px;border-radius:4px;font-size:12.5px;font-weight:600;white-space:nowrap;}
+  .btn-add:hover{background:#3D7BE8;}
+
+  .rec-list{display:flex;flex-direction:column;gap:8px;}
+  .rec{
+    background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px 16px;
+    cursor:pointer;
+  }
+  .rec:hover{border-color:var(--muted-2);}
+  .rec .rrow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  .rec .rid{font-family:var(--mono);font-size:11.5px;color:var(--blue);}
+  .rec .rtitle{font-size:13.5px;font-weight:500;margin:4px 0 6px;line-height:1.4;}
+  .tag{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600;letter-spacing:.02em;white-space:nowrap;}
+  .tag.Critical{background:#2B1518;color:var(--red);}
+  .tag.High{background:#2A2415;color:var(--amber);}
+  .tag.Medium{background:#132234;color:var(--blue);}
+  .tag.Low{background:#132B22;color:var(--green);}
+  .tag.Open{background:#2A2415;color:var(--amber);}
+  .tag.Closed{background:#132B22;color:var(--green);}
+  .tag.Requested{background:#1B2436;color:var(--muted);}
+  .tag.Received{background:#132B22;color:var(--green);}
+  .tag.Overdue{background:#2B1518;color:var(--red);}
+  .rec .rmeta{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);font-family:var(--mono);}
+  .empty{color:var(--muted);font-size:13px;padding:30px;text-align:center;border:1px dashed var(--border);border-radius:6px;}
+
+  /* ---------- Modal ---------- */
+  .modal-backdrop{
+    display:none;position:fixed;inset:0;background:rgba(3,7,15,.7);z-index:50;
+    align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;
+  }
+  .modal-backdrop.active{display:flex;}
+  .modal{
+    background:var(--panel);border:1px solid var(--border);border-radius:8px;
+    width:100%;max-width:560px;padding:22px 24px;margin-bottom:40px;
+  }
+  .modal h2{font-size:15px;margin:0 0 16px;font-weight:600;}
+  .modal .field{margin-bottom:12px;}
+  .modal .field label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px;}
+  .modal .field input, .modal .field select, .modal .field textarea{
+    width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+    padding:8px 10px;border-radius:4px;font-size:13px;
+  }
+  .modal .field textarea{resize:vertical;min-height:56px;font-family:var(--sans);}
+  .modal .field input:focus,.modal .field select:focus,.modal .field textarea:focus{outline:none;border-color:var(--blue);}
+  .modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .modal-actions{display:flex;justify-content:space-between;margin-top:18px;gap:10px;}
+  .modal-actions .left{display:flex;gap:8px;}
+  .btn-save{background:var(--blue);color:#fff;border:none;padding:9px 16px;border-radius:4px;font-size:12.5px;font-weight:600;}
+  .btn-cancel{background:none;border:1px solid var(--border);color:var(--muted);padding:9px 16px;border-radius:4px;font-size:12.5px;}
+  .btn-delete{background:none;border:1px solid #4A2226;color:var(--red);padding:9px 14px;border-radius:4px;font-size:12.5px;}
+
+  .loading{color:var(--muted);font-size:13px;padding:20px;}
+
+  @media (max-width:760px){
+    #app.active{grid-template-columns:1fr;}
+    aside{position:static;height:auto;flex-direction:row;overflow-x:auto;padding:12px;align-items:center;}
+    .brand{border:none;padding:0 12px 0 0;margin:0;flex:none;}
+    nav{flex-direction:row;flex:none;}
+    .sidebar-foot{display:none;}
+    main{padding:18px;}
+    .modal{max-width:100%;}
+    .row2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="authScreen">
+  <div class="auth-box">
+    <h1>KABO QA CONTROL TOWER</h1>
+    <p class="sub">EGPC Engagement — Technical Reviewer Portal. Sign in with your KABO team account.</p>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="authEmail" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="authPassword" autocomplete="current-password" />
+    </div>
+    <button class="btn" id="authSubmit">Sign in</button>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-toggle">
+      <button id="forgotPwBtn">Forgot password?</button>
+    </div>
+    <div class="auth-note">Access is restricted to invited KABO Systems reviewers. Accounts are provisioned by the QA Programme Director — there is no self sign-up.</div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="app">
+  <aside>
+    <div class="brand">
+      <div class="mark">KABO SYSTEMS</div>
+      <h2>QA Control Tower</h2>
+      <div class="eng">EGPC Engagement</div>
+    </div>
+    <nav id="mainNav">
+      <button data-view="dashboard" class="active"><span class="dot"></span>Dashboard</button>
+      <button data-view="findings"><span class="dot"></span>Findings Register</button>
+      <button data-view="evidence"><span class="dot"></span>Evidence Register</button>
+      <button data-view="raid"><span class="dot"></span>RAID Log</button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="who" id="whoAmI"></div>
+      <button class="signout" id="changePwBtn" style="margin-bottom:6px;">Change password</button>
+      <button class="signout" id="signOutBtn">Sign out</button>
+    </div>
+  </aside>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="view-dashboard" class="view">
+      <div class="page-head">
+        <h1>Control Tower Dashboard</h1>
+        <p>Live 7-domain RAG status, key metrics, and gate readiness — auto-calculated from the registers.</p>
+      </div>
+      <p class="section-label">7-DOMAIN QA RAG STATUS</p>
+      <div class="domain-grid" id="domainGrid"></div>
+
+      <p class="section-label">KEY METRICS (auto-calculated from Findings Register)</p>
+      <div class="metrics-row" id="metricsRow"></div>
+
+      <p class="section-label">QUALITY GATE READINESS</p>
+      <div class="gate-row" id="gateRow"></div>
+    </section>
+
+    <!-- FINDINGS -->
+    <section id="view-findings" class="view" style="display:none;">
+      <div class="page-head">
+        <h1>Findings Register</h1>
+        <p>Master QA findings — all domains D0–D7. All AI-generated findings must be marked DRAFT until KABO-validated.</p>
+      </div>
+      <div class="toolbar">
+        <div class="filters">
+          <select id="findFilterDomain"><option value="">All domains</option></select>
+          <select id="findFilterStatus"><option value="">All statuses</option><option>Open</option><option>In Progress</option><option>Closed</option></select>
+          <select id="findFilterSeverity"><option value="">All severities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+        </div>
+        <button class="btn-add" id="addFindingBtn">+ New Finding</button>
+      </div>
+      <div class="rec-list" id="findingsList"></div>
+    </section>
+
+    <!-- EVIDENCE -->
+    <section id="view-evidence" class="view" style="display:none;">
+      <div class="page-head">
+        <h1>Evidence Register</h1>
+        <p>Document receipt log — all submissions requested from EGPC / ITGEST.</p>
+      </div>
+      <div class="toolbar">
+        <div class="filters">
+          <select id="evFilterStatus"><option value="">All statuses</option><option>Requested</option><option>Received</option><option>Overdue</option><option>Waived</option></select>
+          <select id="evFilterSource"><option value="">All sources</option><option>EGPC</option><option>ITGEST</option></select>
+        </div>
+        <button class="btn-add" id="addEvidenceBtn">+ New Document</button>
+      </div>
+      <div class="rec-list" id="evidenceList"></div>
+    </section>
+
+    <!-- RAID -->
+    <section id="view-raid" class="view" style="display:none;">
+      <div class="page-head">
+        <h1>RAID Log</h1>
+        <p>Risks, Actions, Issues, Decisions — pre-seeded from SOW Risk Register.</p>
+      </div>
+      <div class="toolbar">
+        <div class="filters">
+          <select id="raidFilterType"><option value="">All types</option><option>Risk</option><option>Action</option><option>Issue</option><option>Decision</option></select>
+          <select id="raidFilterStatus"><option value="">All statuses</option><option>Open</option><option>Closed</option></select>
+        </div>
+        <button class="btn-add" id="addRaidBtn">+ New RAID Item</button>
+      </div>
+      <div class="rec-list" id="raidList"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ============ CHANGE PASSWORD MODAL ============ -->
+<div class="modal-backdrop" id="pwModalBackdrop">
+  <div class="modal" style="max-width:380px;">
+    <h2>Change password</h2>
+    <div class="field"><label>New password</label><input type="password" id="pw_new" autocomplete="new-password" /></div>
+    <div class="field"><label>Confirm new password</label><input type="password" id="pw_confirm" autocomplete="new-password" /></div>
+    <div class="auth-error" id="pwError"></div>
+    <div class="modal-actions">
+      <div class="left"></div>
+      <div class="left">
+        <button class="btn-cancel" id="pwCancelBtn">Cancel</button>
+        <button class="btn-save" id="pwSaveBtn">Update password</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODALS ============ -->
+<div class="modal-backdrop" id="findingModalBackdrop">
+  <div class="modal">
+    <h2 id="findingModalTitle">New Finding</h2>
+    <input type="hidden" id="f_id_orig" />
+    <div class="row2">
+      <div class="field"><label>Finding ID</label><input id="f_id" placeholder="F-007" /></div>
+      <div class="field"><label>Domain</label>
+        <select id="f_domain"><option value="D0">D0</option><option value="D1">D1</option><option value="D2">D2</option><option value="D3">D3</option><option value="D4">D4</option><option value="D5">D5</option><option value="D6">D6</option><option value="D7">D7</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Gate</label><input id="f_gate" placeholder="Gate 1 / —" /></div>
+      <div class="field"><label>Sub-domain</label><input id="f_subdomain" /></div>
+    </div>
+    <div class="field"><label>Finding description</label><textarea id="f_description"></textarea></div>
+    <div class="field"><label>Evidence / source</label><input id="f_evidence" /></div>
+    <div class="row2">
+      <div class="field"><label>Severity</label>
+        <select id="f_severity"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+      </div>
+      <div class="field"><label>AI / Manual</label>
+        <select id="f_aimanual"><option>Manual</option><option>AI</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Requirement</label><input id="f_requirement" /></div>
+    <div class="field"><label>AI observation (DRAFT)</label><textarea id="f_ai_observation"></textarea></div>
+    <div class="field"><label>KABO validated finding</label><textarea id="f_kabo_validated"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Status</label>
+        <select id="f_status"><option>Open</option><option>In Progress</option><option>Closed</option></select>
+      </div>
+      <div class="field"><label>Owner</label><input id="f_owner" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Due date</label><input id="f_due" placeholder="Wk 12" /></div>
+      <div class="field"><label>Resolution / closure evidence</label><input id="f_resolution" /></div>
+    </div>
+    <div class="modal-actions">
+      <div class="left">
+        <button class="btn-delete" id="findingDeleteBtn" style="display:none;">Delete</button>
+      </div>
+      <div class="left">
+        <button class="btn-cancel" id="findingCancelBtn">Cancel</button>
+        <button class="btn-save" id="findingSaveBtn">Save finding</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="evidenceModalBackdrop">
+  <div class="modal">
+    <h2 id="evidenceModalTitle">New Document</h2>
+    <input type="hidden" id="e_id_orig" />
+    <div class="row2">
+      <div class="field"><label>Phase</label><input id="e_phase" placeholder="WK 5" /></div>
+      <div class="field"><label>Source</label>
+        <select id="e_source"><option>EGPC</option><option>ITGEST</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Document / artefact</label><input id="e_document" /></div>
+    <div class="field"><label>Requested from</label><input id="e_requested_from" /></div>
+    <div class="row2">
+      <div class="field"><label>Status</label>
+        <select id="e_status"><option>Requested</option><option>Received</option><option>Overdue</option><option>Waived</option></select>
+      </div>
+      <div class="field"><label>Sensitivity</label>
+        <select id="e_sensitivity"><option>Standard</option><option>Restricted</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Date requested</label><input type="date" id="e_date_requested" /></div>
+      <div class="field"><label>Date received</label><input type="date" id="e_date_received" /></div>
+    </div>
+    <div class="field"><label>Finding ref</label><input id="e_finding_ref" placeholder="F-004" /></div>
+    <div class="field"><label>Notes / gaps</label><textarea id="e_notes"></textarea></div>
+    <div class="modal-actions">
+      <div class="left">
+        <button class="btn-delete" id="evidenceDeleteBtn" style="display:none;">Delete</button>
+      </div>
+      <div class="left">
+        <button class="btn-cancel" id="evidenceCancelBtn">Cancel</button>
+        <button class="btn-save" id="evidenceSaveBtn">Save document</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="raidModalBackdrop">
+  <div class="modal">
+    <h2 id="raidModalTitle">New RAID Item</h2>
+    <input type="hidden" id="r_pk" />
+    <div class="row2">
+      <div class="field"><label>RAID ID</label><input id="r_raid_id" placeholder="R-13" /></div>
+      <div class="field"><label>Type</label>
+        <select id="r_type"><option>Risk</option><option>Action</option><option>Issue</option><option>Decision</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Description</label><textarea id="r_description"></textarea></div>
+    <div class="field"><label>Mitigation / response</label><textarea id="r_mitigation"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Probability</label><input id="r_probability" placeholder="High/Medium/Low" /></div>
+      <div class="field"><label>Impact</label><input id="r_impact" placeholder="High/Medium/Low" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Priority</label><input id="r_priority" placeholder="Critical/High/Medium" /></div>
+      <div class="field"><label>Owner</label><input id="r_owner" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Status</label>
+        <select id="r_status"><option>Open</option><option>Closed</option></select>
+      </div>
+      <div class="field"><label>Finding ref</label><input id="r_finding_ref" placeholder="F-003" /></div>
+    </div>
+    <div class="field"><label>Notes</label><input id="r_notes" /></div>
+    <div class="modal-actions">
+      <div class="left">
+        <button class="btn-delete" id="raidDeleteBtn" style="display:none;">Delete</button>
+      </div>
+      <div class="left">
+        <button class="btn-cancel" id="raidCancelBtn">Cancel</button>
+        <button class="btn-save" id="raidSaveBtn">Save item</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://fqonpmalspvtftsvklvb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxb25wbWFsc3B2dGZ0c3ZrbHZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODU3NDQsImV4cCI6MjEwNTY2MTc0NH0.z7KLz2ZyUSnpReP1-ZyescMLdiKiv_gd8Eq1yqzE7Lc";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let STATE = {
+  domains: [], findings: [], evidence: [], raid: [], gates: [],
+  session: null
+};
+
+// ---------- AUTH ----------
+document.getElementById('authSubmit').addEventListener('click', async () => {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('authError');
+  errEl.style.color = 'var(--red)';
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Enter email and password.'; return; }
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  } catch (e) {
+    errEl.textContent = e.message || 'Something went wrong.';
+  }
+});
+
+document.getElementById('forgotPwBtn').addEventListener('click', async () => {
+  const email = document.getElementById('authEmail').value.trim();
+  const errEl = document.getElementById('authError');
+  errEl.textContent = '';
+  if (!email) { errEl.style.color = 'var(--red)'; errEl.textContent = 'Enter your email above first, then click "Forgot password?" again.'; return; }
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+    if (error) throw error;
+    errEl.style.color = 'var(--green)';
+    errEl.textContent = 'Password reset email sent — check your inbox.';
+  } catch (e) {
+    errEl.style.color = 'var(--red)';
+    errEl.textContent = e.message || 'Something went wrong.';
+  }
+});
+
+// Handle password-recovery redirect (Supabase appends #access_token=...&type=recovery)
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    setTimeout(() => openChangePasswordModal(true), 300);
+  }
+});
+
+document.getElementById('signOutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+});
+
+sb.auth.onAuthStateChange((event, session) => {
+  STATE.session = session;
+  if (session) {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    document.getElementById('whoAmI').textContent = session.user.email;
+    initData();
+  } else {
+    document.getElementById('authScreen').style.display = 'flex';
+    document.getElementById('app').classList.remove('active');
+  }
+});
+
+// ---------- NAV ----------
+document.getElementById('mainNav').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-view]');
+  if (!btn) return;
+  document.querySelectorAll('#mainNav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+  document.getElementById('view-' + btn.dataset.view).style.display = 'block';
+});
+
+// ---------- DATA LOAD + REALTIME ----------
+async function initData() {
+  await Promise.all([loadDomains(), loadFindings(), loadEvidence(), loadRaid(), loadGates()]);
+  renderAll();
+  subscribeRealtime();
+}
+
+async function loadDomains() {
+  const { data } = await sb.from('domains').select('*').order('id');
+  STATE.domains = data || [];
+}
+async function loadFindings() {
+  const { data } = await sb.from('findings').select('*').order('id');
+  STATE.findings = data || [];
+}
+async function loadEvidence() {
+  const { data } = await sb.from('evidence').select('*').order('id');
+  STATE.evidence = data || [];
+}
+async function loadRaid() {
+  const { data } = await sb.from('raid_log').select('*').order('id');
+  STATE.raid = data || [];
+}
+async function loadGates() {
+  const { data } = await sb.from('gate_readiness').select('*').order('id');
+  STATE.gates = data || [];
+}
+
+function subscribeRealtime() {
+  sb.channel('control-tower')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'domains' }, async () => { await loadDomains(); renderAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'findings' }, async () => { await loadFindings(); renderAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'evidence' }, async () => { await loadEvidence(); renderAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'raid_log' }, async () => { await loadRaid(); renderAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'gate_readiness' }, async () => { await loadGates(); renderAll(); })
+    .subscribe();
+}
+
+function renderAll() {
+  renderDashboard();
+  renderFindings();
+  renderEvidence();
+  renderRaid();
+  populateDomainFilter();
+}
+
+// ---------- DASHBOARD ----------
+function ragClass(s) {
+  if (!s) return 'NA';
+  const u = s.toUpperCase();
+  if (u.startsWith('RED')) return 'RED';
+  if (u.startsWith('AMBER')) return 'AMBER';
+  if (u.startsWith('GREEN')) return 'GREEN';
+  return 'NA';
+}
+
+function renderDashboard() {
+  const grid = document.getElementById('domainGrid');
+  grid.innerHTML = STATE.domains.map(d => {
+    const open = STATE.findings.filter(f => f.domain === d.id && f.status !== 'Closed').length;
+    const closed = STATE.findings.filter(f => f.domain === d.id && f.status === 'Closed').length;
+    return `<div class="domain-tile">
+      <div class="top">
+        <span class="code">${d.id}</span>
+        <span class="light ${ragClass(d.rag_status)}"></span>
+      </div>
+      <div class="name">${d.name}</div>
+      <div class="desc">${d.description || ''}</div>
+      <div class="meta"><span>OPEN ${open}</span><span>CLOSED ${closed}</span><span>${d.gate || '—'}</span></div>
+      <select data-domain-id="${d.id}" class="rag-select">
+        <option value="GREEN" ${d.rag_status==='GREEN'?'selected':''}>GREEN</option>
+        <option value="AMBER" ${d.rag_status==='AMBER'?'selected':''}>AMBER</option>
+        <option value="RED" ${d.rag_status==='RED'?'selected':''}>RED</option>
+        <option value="RED — NOT STARTED" ${d.rag_status==='RED — NOT STARTED'?'selected':''}>RED — NOT STARTED</option>
+        <option value="N/A" ${(d.rag_status||'').startsWith('N/A')?'selected':''}>N/A</option>
+      </select>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.rag-select').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      await sb.from('domains').update({ rag_status: e.target.value, updated_at: new Date().toISOString() }).eq('id', e.target.dataset.domainId);
+    });
+  });
+
+  const totalOpen = STATE.findings.filter(f => f.status !== 'Closed').length;
+  const totalClosed = STATE.findings.filter(f => f.status === 'Closed').length;
+  const critOpen = STATE.findings.filter(f => f.status !== 'Closed' && f.severity === 'Critical').length;
+  const highOpen = STATE.findings.filter(f => f.status !== 'Closed' && f.severity === 'High').length;
+  const evGaps = STATE.evidence.filter(e => e.status === 'Overdue').length;
+  const docsPending = STATE.evidence.filter(e => e.status === 'Requested').length;
+  const actionsOverdue = STATE.raid.filter(r => r.type === 'Action' && r.status === 'Open').length;
+
+  const metrics = [
+    ['Total Findings Open', totalOpen, totalOpen > 0 ? 'amber' : ''],
+    ['Total Findings Closed', totalClosed, ''],
+    ['Critical Open', critOpen, critOpen > 0 ? 'red' : ''],
+    ['High Open', highOpen, highOpen > 0 ? 'amber' : ''],
+    ['Evidence Gaps', evGaps, evGaps > 0 ? 'red' : ''],
+    ['Docs Pending Receipt', docsPending, ''],
+    ['Actions Overdue', actionsOverdue, actionsOverdue > 0 ? 'red' : ''],
+  ];
+  document.getElementById('metricsRow').innerHTML = metrics.map(([lbl, val, cls]) =>
+    `<div class="metric"><div class="val ${cls}">${val}</div><div class="lbl">${lbl}</div></div>`
+  ).join('');
+
+  document.getElementById('gateRow').innerHTML = STATE.gates.map(g => `
+    <div class="gate-card">
+      <div class="gh"><h3>${g.id}</h3><span class="status-pill ${g.status}">${g.status.toUpperCase()}</span></div>
+      <div class="win">${g.window_text || ''}</div>
+      <div class="crit"><strong style="color:var(--text);font-size:11.5px;">Criteria:</strong> ${g.key_criteria || ''}</div>
+      <div class="crit"><strong style="color:var(--text);font-size:11.5px;">Tech reviewer input:</strong> ${g.technical_reviewer_input || ''}</div>
+    </div>
+  `).join('');
+}
+
+function populateDomainFilter() {
+  const sel = document.getElementById('findFilterDomain');
+  if (sel.dataset.populated) return;
+  sel.dataset.populated = '1';
+  sel.innerHTML = '<option value="">All domains</option>' + STATE.domains.map(d => `<option value="${d.id}">${d.id} — ${d.name}</option>`).join('');
+}
+
+// ---------- FINDINGS ----------
+function renderFindings() {
+  const domF = document.getElementById('findFilterDomain').value;
+  const statF = document.getElementById('findFilterStatus').value;
+  const sevF = document.getElementById('findFilterSeverity').value;
+  let rows = STATE.findings;
+  if (domF) rows = rows.filter(f => f.domain === domF);
+  if (statF) rows = rows.filter(f => f.status === statF);
+  if (sevF) rows = rows.filter(f => f.severity === sevF);
+
+  const list = document.getElementById('findingsList');
+  if (!rows.length) { list.innerHTML = '<div class="empty">No findings match these filters.</div>'; return; }
+  list.innerHTML = rows.map(f => `
+    <div class="rec" data-id="${f.id}" data-kind="finding">
+      <div class="rrow">
+        <div>
+          <span class="rid">${f.id}</span> <span class="rid" style="color:var(--muted);">· ${f.domain || ''}${f.sub_domain ? ' — ' + f.sub_domain : ''}</span>
+          <div class="rtitle">${f.description || ''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex:none;">
+          <span class="tag ${f.severity||''}">${f.severity||''}</span>
+          <span class="tag ${f.status==='Closed'?'Closed':'Open'}">${f.status||''}</span>
+        </div>
+      </div>
+      <div class="rmeta"><span>OWNER: ${f.owner||'—'}</span><span>DUE: ${f.due_date||'—'}</span><span>GATE: ${f.gate||'—'}</span></div>
+    </div>
+  `).join('');
+}
+['findFilterDomain','findFilterStatus','findFilterSeverity'].forEach(id =>
+  document.getElementById(id).addEventListener('change', renderFindings));
+
+document.getElementById('findingsList').addEventListener('click', (e) => {
+  const rec = e.target.closest('.rec'); if (!rec) return;
+  openFindingModal(STATE.findings.find(f => f.id === rec.dataset.id));
+});
+document.getElementById('addFindingBtn').addEventListener('click', () => openFindingModal(null));
+
+function openFindingModal(f) {
+  document.getElementById('findingModalTitle').textContent = f ? 'Edit ' + f.id : 'New Finding';
+  document.getElementById('f_id_orig').value = f ? f.id : '';
+  document.getElementById('f_id').value = f ? f.id : nextId('F', STATE.findings.map(x=>x.id));
+  document.getElementById('f_domain').value = f ? f.domain : 'D0';
+  document.getElementById('f_gate').value = f ? (f.gate||'') : '';
+  document.getElementById('f_subdomain').value = f ? (f.sub_domain||'') : '';
+  document.getElementById('f_description').value = f ? (f.description||'') : '';
+  document.getElementById('f_evidence').value = f ? (f.evidence_source||'') : '';
+  document.getElementById('f_severity').value = f ? (f.severity||'Medium') : 'Medium';
+  document.getElementById('f_aimanual').value = f ? (f.ai_or_manual||'Manual') : 'Manual';
+  document.getElementById('f_requirement').value = f ? (f.requirement||'') : '';
+  document.getElementById('f_ai_observation').value = f ? (f.ai_observation||'') : '';
+  document.getElementById('f_kabo_validated').value = f ? (f.kabo_validated_finding||'') : '';
+  document.getElementById('f_status').value = f ? (f.status||'Open') : 'Open';
+  document.getElementById('f_owner').value = f ? (f.owner||'') : '';
+  document.getElementById('f_due').value = f ? (f.due_date||'') : '';
+  document.getElementById('f_resolution').value = f ? (f.resolution||'') : '';
+  document.getElementById('findingDeleteBtn').style.display = f ? 'inline-block' : 'none';
+  document.getElementById('findingModalBackdrop').classList.add('active');
+}
+function nextId(prefix, existing) {
+  let n = 1;
+  const nums = existing.filter(x => x && x.startsWith(prefix + '-')).map(x => parseInt(x.split('-')[1],10)).filter(x=>!isNaN(x));
+  if (nums.length) n = Math.max(...nums) + 1;
+  return prefix + '-' + String(n).padStart(3,'0');
+}
+document.getElementById('findingCancelBtn').addEventListener('click', () => document.getElementById('findingModalBackdrop').classList.remove('active'));
+document.getElementById('findingSaveBtn').addEventListener('click', async () => {
+  const origId = document.getElementById('f_id_orig').value;
+  const payload = {
+    id: document.getElementById('f_id').value.trim(),
+    domain: document.getElementById('f_domain').value,
+    gate: document.getElementById('f_gate').value,
+    sub_domain: document.getElementById('f_subdomain').value,
+    description: document.getElementById('f_description').value,
+    evidence_source: document.getElementById('f_evidence').value,
+    severity: document.getElementById('f_severity').value,
+    ai_or_manual: document.getElementById('f_aimanual').value,
+    requirement: document.getElementById('f_requirement').value,
+    ai_observation: document.getElementById('f_ai_observation').value,
+    kabo_validated_finding: document.getElementById('f_kabo_validated').value,
+    status: document.getElementById('f_status').value,
+    owner: document.getElementById('f_owner').value,
+    due_date: document.getElementById('f_due').value,
+    resolution: document.getElementById('f_resolution').value,
+    updated_at: new Date().toISOString(),
+  };
+  if (origId) {
+    await sb.from('findings').update(payload).eq('id', origId);
+  } else {
+    await sb.from('findings').insert(payload);
+  }
+  document.getElementById('findingModalBackdrop').classList.remove('active');
+});
+document.getElementById('findingDeleteBtn').addEventListener('click', async () => {
+  const origId = document.getElementById('f_id_orig').value;
+  if (origId && confirm('Delete finding ' + origId + '?')) {
+    await sb.from('findings').delete().eq('id', origId);
+    document.getElementById('findingModalBackdrop').classList.remove('active');
+  }
+});
+
+// ---------- EVIDENCE ----------
+function renderEvidence() {
+  const statF = document.getElementById('evFilterStatus').value;
+  const srcF = document.getElementById('evFilterSource').value;
+  let rows = STATE.evidence;
+  if (statF) rows = rows.filter(e => e.status === statF);
+  if (srcF) rows = rows.filter(e => e.source === srcF);
+  const list = document.getElementById('evidenceList');
+  if (!rows.length) { list.innerHTML = '<div class="empty">No documents match these filters.</div>'; return; }
+  list.innerHTML = rows.map(e => `
+    <div class="rec" data-id="${e.id}" data-kind="evidence">
+      <div class="rrow">
+        <div>
+          <span class="rid">#${e.id} · ${e.phase||''} · ${e.source||''}</span>
+          <div class="rtitle">${e.document||''}</div>
+        </div>
+        <span class="tag ${e.status||''}">${e.status||''}</span>
+      </div>
+      <div class="rmeta"><span>FROM: ${e.requested_from||'—'}</span><span>SENS: ${e.sensitivity||'—'}</span><span>FINDING: ${e.finding_ref||'—'}</span></div>
+    </div>
+  `).join('');
+}
+['evFilterStatus','evFilterSource'].forEach(id => document.getElementById(id).addEventListener('change', renderEvidence));
+document.getElementById('evidenceList').addEventListener('click', (e) => {
+  const rec = e.target.closest('.rec'); if (!rec) return;
+  openEvidenceModal(STATE.evidence.find(x => String(x.id) === rec.dataset.id));
+});
+document.getElementById('addEvidenceBtn').addEventListener('click', () => openEvidenceModal(null));
+
+function openEvidenceModal(ev) {
+  document.getElementById('evidenceModalTitle').textContent = ev ? 'Edit document #' + ev.id : 'New Document';
+  document.getElementById('e_id_orig').value = ev ? ev.id : '';
+  document.getElementById('e_phase').value = ev ? (ev.phase||'') : '';
+  document.getElementById('e_source').value = ev ? (ev.source||'EGPC') : 'EGPC';
+  document.getElementById('e_document').value = ev ? (ev.document||'') : '';
+  document.getElementById('e_requested_from').value = ev ? (ev.requested_from||'') : '';
+  document.getElementById('e_status').value = ev ? (ev.status||'Requested') : 'Requested';
+  document.getElementById('e_sensitivity').value = ev ? (ev.sensitivity||'Standard') : 'Standard';
+  document.getElementById('e_date_requested').value = ev ? (ev.date_requested||'') : '';
+  document.getElementById('e_date_received').value = ev ? (ev.date_received||'') : '';
+  document.getElementById('e_finding_ref').value = ev ? (ev.finding_ref||'') : '';
+  document.getElementById('e_notes').value = ev ? (ev.notes||'') : '';
+  document.getElementById('evidenceDeleteBtn').style.display = ev ? 'inline-block' : 'none';
+  document.getElementById('evidenceModalBackdrop').classList.add('active');
+}
+document.getElementById('evidenceCancelBtn').addEventListener('click', () => document.getElementById('evidenceModalBackdrop').classList.remove('active'));
+document.getElementById('evidenceSaveBtn').addEventListener('click', async () => {
+  const origId = document.getElementById('e_id_orig').value;
+  const payload = {
+    phase: document.getElementById('e_phase').value,
+    source: document.getElementById('e_source').value,
+    document: document.getElementById('e_document').value,
+    requested_from: document.getElementById('e_requested_from').value,
+    status: document.getElementById('e_status').value,
+    sensitivity: document.getElementById('e_sensitivity').value,
+    date_requested: document.getElementById('e_date_requested').value || null,
+    date_received: document.getElementById('e_date_received').value || null,
+    finding_ref: document.getElementById('e_finding_ref').value || null,
+    notes: document.getElementById('e_notes').value,
+    updated_at: new Date().toISOString(),
+  };
+  if (origId) {
+    await sb.from('evidence').update(payload).eq('id', origId);
+  } else {
+    await sb.from('evidence').insert(payload);
+  }
+  document.getElementById('evidenceModalBackdrop').classList.remove('active');
+});
+document.getElementById('evidenceDeleteBtn').addEventListener('click', async () => {
+  const origId = document.getElementById('e_id_orig').value;
+  if (origId && confirm('Delete this document record?')) {
+    await sb.from('evidence').delete().eq('id', origId);
+    document.getElementById('evidenceModalBackdrop').classList.remove('active');
+  }
+});
+
+// ---------- RAID ----------
+function renderRaid() {
+  const typeF = document.getElementById('raidFilterType').value;
+  const statF = document.getElementById('raidFilterStatus').value;
+  let rows = STATE.raid;
+  if (typeF) rows = rows.filter(r => r.type === typeF);
+  if (statF) rows = rows.filter(r => r.status === statF);
+  const list = document.getElementById('raidList');
+  if (!rows.length) { list.innerHTML = '<div class="empty">No RAID items match these filters.</div>'; return; }
+  list.innerHTML = rows.map(r => `
+    <div class="rec" data-id="${r.id}" data-kind="raid">
+      <div class="rrow">
+        <div>
+          <span class="rid">${r.raid_id} · ${r.type}</span>
+          <div class="rtitle">${r.description||''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex:none;">
+          <span class="tag ${r.priority||''}">${r.priority||''}</span>
+          <span class="tag ${r.status==='Closed'?'Closed':'Open'}">${r.status||''}</span>
+        </div>
+      </div>
+      <div class="rmeta"><span>OWNER: ${r.owner||'—'}</span><span>PROB/IMP: ${r.probability||'—'}/${r.impact||'—'}</span><span>FINDING: ${r.finding_ref||'—'}</span></div>
+    </div>
+  `).join('');
+}
+['raidFilterType','raidFilterStatus'].forEach(id => document.getElementById(id).addEventListener('change', renderRaid));
+document.getElementById('raidList').addEventListener('click', (e) => {
+  const rec = e.target.closest('.rec'); if (!rec) return;
+  openRaidModal(STATE.raid.find(x => String(x.id) === rec.dataset.id));
+});
+document.getElementById('addRaidBtn').addEventListener('click', () => openRaidModal(null));
+
+function openRaidModal(r) {
+  document.getElementById('raidModalTitle').textContent = r ? 'Edit ' + r.raid_id : 'New RAID Item';
+  document.getElementById('r_pk').value = r ? r.id : '';
+  document.getElementById('r_raid_id').value = r ? r.raid_id : '';
+  document.getElementById('r_type').value = r ? r.type : 'Risk';
+  document.getElementById('r_description').value = r ? (r.description||'') : '';
+  document.getElementById('r_mitigation').value = r ? (r.mitigation||'') : '';
+  document.getElementById('r_probability').value = r ? (r.probability||'') : '';
+  document.getElementById('r_impact').value = r ? (r.impact||'') : '';
+  document.getElementById('r_priority').value = r ? (r.priority||'') : '';
+  document.getElementById('r_owner').value = r ? (r.owner||'') : '';
+  document.getElementById('r_status').value = r ? (r.status||'Open') : 'Open';
+  document.getElementById('r_finding_ref').value = r ? (r.finding_ref||'') : '';
+  document.getElementById('r_notes').value = r ? (r.notes||'') : '';
+  document.getElementById('raidDeleteBtn').style.display = r ? 'inline-block' : 'none';
+  document.getElementById('raidModalBackdrop').classList.add('active');
+}
+document.getElementById('raidCancelBtn').addEventListener('click', () => document.getElementById('raidModalBackdrop').classList.remove('active'));
+document.getElementById('raidSaveBtn').addEventListener('click', async () => {
+  const pk = document.getElementById('r_pk').value;
+  const payload = {
+    raid_id: document.getElementById('r_raid_id').value.trim(),
+    type: document.getElementById('r_type').value,
+    description: document.getElementById('r_description').value,
+    mitigation: document.getElementById('r_mitigation').value,
+    probability: document.getElementById('r_probability').value,
+    impact: document.getElementById('r_impact').value,
+    priority: document.getElementById('r_priority').value,
+    owner: document.getElementById('r_owner').value,
+    status: document.getElementById('r_status').value,
+    finding_ref: document.getElementById('r_finding_ref').value || null,
+    notes: document.getElementById('r_notes').value,
+    updated_at: new Date().toISOString(),
+  };
+  if (pk) {
+    await sb.from('raid_log').update(payload).eq('id', pk);
+  } else {
+    await sb.from('raid_log').insert(payload);
+  }
+  document.getElementById('raidModalBackdrop').classList.remove('active');
+});
+document.getElementById('raidDeleteBtn').addEventListener('click', async () => {
+  const pk = document.getElementById('r_pk').value;
+  if (pk && confirm('Delete ' + document.getElementById('r_raid_id').value + '?')) {
+    await sb.from('raid_log').delete().eq('id', pk);
+    document.getElementById('raidModalBackdrop').classList.remove('active');
+  }
+});
+
+// ---------- CHANGE PASSWORD ----------
+function openChangePasswordModal() {
+  document.getElementById('pw_new').value = '';
+  document.getElementById('pw_confirm').value = '';
+  document.getElementById('pwError').textContent = '';
+  document.getElementById('pwModalBackdrop').classList.add('active');
+}
+document.getElementById('changePwBtn').addEventListener('click', () => openChangePasswordModal(false));
+document.getElementById('pwCancelBtn').addEventListener('click', () => document.getElementById('pwModalBackdrop').classList.remove('active'));
+document.getElementById('pwSaveBtn').addEventListener('click', async () => {
+  const p1 = document.getElementById('pw_new').value;
+  const p2 = document.getElementById('pw_confirm').value;
+  const errEl = document.getElementById('pwError');
+  errEl.style.color = 'var(--red)';
+  if (!p1 || p1.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+  if (p1 !== p2) { errEl.textContent = 'Passwords do not match.'; return; }
+  try {
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    if (error) throw error;
+    document.getElementById('pwModalBackdrop').classList.remove('active');
+  } catch (e) {
+    errEl.textContent = e.message || 'Could not update password.';
+  }
+});
+
+// close modals on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(b => {
+  b.addEventListener('click', (e) => { if (e.target === b) b.classList.remove('active'); });
+});
+</script>
+</body>
+</html>
