@@ -221,6 +221,13 @@
     padding:8px 10px;border-radius:4px;font-size:13px;
   }
   .modal .field textarea{resize:vertical;min-height:56px;font-family:var(--sans);}
+  .modal .field input[type=file]{
+    padding:8px;font-size:12px;color:var(--muted);
+  }
+  .modal .field input[type=file]::file-selector-button{
+    background:var(--blue);color:#fff;border:none;padding:6px 12px;border-radius:4px;
+    font-size:12px;font-weight:600;margin-right:10px;cursor:pointer;
+  }
   .modal .field input:focus,.modal .field select:focus,.modal .field textarea:focus{outline:none;border-color:var(--blue);}
   .modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .modal-actions{display:flex;justify-content:space-between;margin-top:18px;gap:10px;}
@@ -681,6 +688,11 @@
     </div>
     <div class="field"><label>Finding ref</label><input id="e_finding_ref" placeholder="F-004" /></div>
     <div class="field"><label>Notes / gaps</label><textarea id="e_notes"></textarea></div>
+    <div class="field">
+      <label>Document file</label>
+      <input type="file" id="e_file_input" />
+      <div id="e_file_current" style="font-size:11.5px;color:var(--muted);margin-top:6px;"></div>
+    </div>
     <div class="modal-actions">
       <div class="left">
         <button class="btn-delete" id="evidenceDeleteBtn" style="display:none;">Delete</button>
@@ -1328,7 +1340,7 @@ function renderEvidence() {
       <div class="rrow">
         <div>
           <span class="rid">#${e.id} · ${e.phase||''} · ${e.source||''}</span>
-          <div class="rtitle">${e.document||''}</div>
+          <div class="rtitle">${e.document||''}${e.file_path ? ' <span style="color:var(--blue);font-size:11px;">📎 attached</span>' : ''}</div>
         </div>
         <span class="tag ${e.status||''}">${e.status||''}</span>
       </div>
@@ -1356,35 +1368,78 @@ function openEvidenceModal(ev) {
   document.getElementById('e_date_received').value = ev ? (ev.date_received||'') : '';
   document.getElementById('e_finding_ref').value = ev ? (ev.finding_ref||'') : '';
   document.getElementById('e_notes').value = ev ? (ev.notes||'') : '';
+  document.getElementById('e_file_input').value = '';
+  const fileCurrentEl = document.getElementById('e_file_current');
+  if (ev && ev.file_path) {
+    fileCurrentEl.innerHTML = `Attached: ${ev.file_name || 'file'} — <a href="#" id="e_file_download_link" style="color:var(--blue);">Download</a>`;
+    document.getElementById('e_file_download_link').addEventListener('click', async (evt) => {
+      evt.preventDefault();
+      await downloadEvidenceFile(ev);
+    });
+  } else {
+    fileCurrentEl.textContent = 'No file attached yet.';
+  }
   document.getElementById('evidenceDeleteBtn').style.display = ev ? 'inline-block' : 'none';
   document.getElementById('evidenceModalBackdrop').classList.add('active');
+}
+
+async function downloadEvidenceFile(ev) {
+  if (!ev.file_bucket || !ev.file_path) return;
+  const { data, error } = await sb.storage.from(ev.file_bucket).createSignedUrl(ev.file_path, 60);
+  if (error) { alert('Could not generate download link: ' + error.message); return; }
+  window.open(data.signedUrl, '_blank');
 }
 document.getElementById('evidenceCancelBtn').addEventListener('click', () => document.getElementById('evidenceModalBackdrop').classList.remove('active'));
 document.getElementById('evidenceSaveBtn').addEventListener('click', async () => {
   const origId = document.getElementById('e_id_orig').value;
+  const sensitivity = document.getElementById('e_sensitivity').value;
   const payload = {
     phase: document.getElementById('e_phase').value,
     source: document.getElementById('e_source').value,
     document: document.getElementById('e_document').value,
     requested_from: document.getElementById('e_requested_from').value,
     status: document.getElementById('e_status').value,
-    sensitivity: document.getElementById('e_sensitivity').value,
+    sensitivity: sensitivity,
     date_requested: document.getElementById('e_date_requested').value || null,
     date_received: document.getElementById('e_date_received').value || null,
     finding_ref: document.getElementById('e_finding_ref').value || null,
     notes: document.getElementById('e_notes').value,
     updated_at: new Date().toISOString(),
   };
+  let rowId = origId;
   if (origId) {
     await sb.from('evidence').update(payload).eq('id', origId);
   } else {
-    await sb.from('evidence').insert(payload);
+    const { data, error } = await sb.from('evidence').insert(payload).select().single();
+    if (!error && data) rowId = data.id;
   }
+
+  const fileInput = document.getElementById('e_file_input');
+  const file = fileInput.files[0];
+  if (file && rowId) {
+    const bucket = sensitivity === 'Restricted' ? 'evidence-restricted' : 'evidence-standard';
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${rowId}/${Date.now()}_${safeName}`;
+    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { upsert: false });
+    if (upErr) {
+      alert('Document saved, but the file upload failed: ' + upErr.message);
+    } else {
+      await sb.from('evidence').update({
+        file_bucket: bucket, file_path: path, file_name: file.name, file_size: file.size,
+        uploaded_at: new Date().toISOString(),
+      }).eq('id', rowId);
+    }
+  }
+
   document.getElementById('evidenceModalBackdrop').classList.remove('active');
 });
 document.getElementById('evidenceDeleteBtn').addEventListener('click', async () => {
   const origId = document.getElementById('e_id_orig').value;
   if (origId && confirm('Delete this document record?')) {
+    const ev = STATE.evidence.find(x => String(x.id) === origId);
+    if (ev && ev.file_bucket && ev.file_path) {
+      await sb.storage.from(ev.file_bucket).remove([ev.file_path]);
+    }
     await sb.from('evidence').delete().eq('id', origId);
     document.getElementById('evidenceModalBackdrop').classList.remove('active');
   }
