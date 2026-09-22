@@ -144,6 +144,10 @@
   .status-pill.Pending{background:#2A2415;color:var(--amber);}
   .status-pill.Met{background:#132B22;color:var(--green);}
   .status-pill.Blocked{background:#2B1518;color:var(--red);}
+  .gate-card select{
+    margin-top:12px;width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+    font-size:11px;padding:5px 6px;border-radius:4px;
+  }
 
   /* ---------- Data tables ---------- */
   .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
@@ -1083,8 +1087,18 @@ function renderDashboard() {
       <div class="win">${g.window_text || ''}</div>
       <div class="crit"><strong style="color:var(--text);font-size:11.5px;">Criteria:</strong> ${g.key_criteria || ''}</div>
       <div class="crit"><strong style="color:var(--text);font-size:11.5px;">Tech reviewer input:</strong> ${g.technical_reviewer_input || ''}</div>
+      <select data-gate-id="${g.id}" class="gate-status-select">
+        <option value="Pending" ${g.status==='Pending'?'selected':''}>Pending</option>
+        <option value="Met" ${g.status==='Met'?'selected':''}>Met</option>
+        <option value="Blocked" ${g.status==='Blocked'?'selected':''}>Blocked</option>
+      </select>
     </div>
   `).join('');
+  document.getElementById('gateRow').querySelectorAll('.gate-status-select').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      await sb.from('gate_readiness').update({ status: e.target.value }).eq('id', e.target.dataset.gateId);
+    });
+  });
 }
 
 function populateDomainFilter() {
